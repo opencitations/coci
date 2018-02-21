@@ -82,7 +82,7 @@ if __name__ == "__main__":
             get_url = crossref_query % (visibility, increment, quote(cursor), conf["email"])
             print("Querying Crossref API: %s" % get_url)
 
-            r = get(get_url, headers={"User-Agent": conf["useragent"]})
+            r = get(get_url, headers={"User-Agent": conf["useragent"]}, timeout=300)
             if r.status_code == 200:
                 # Find storing dir
                 dir_number = 1
