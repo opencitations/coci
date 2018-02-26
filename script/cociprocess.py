@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[15]:
+# In[99]:
 
 from requests.exceptions import ReadTimeout, ConnectTimeout
 import os
@@ -13,6 +13,7 @@ import urllib.parse
 import datetime
 import csv
 import re
+import errno
 from time import sleep
 from duration import (
     to_iso8601,
@@ -33,12 +34,12 @@ CROSSREF_CODE = '020'
 
 OUT_DATA_PATH = "data/"
 OUT_PROV_PATH = "prov/"
-LOOKUP_CSVPATH = 'index/lookup.csv'
-INDEX_PROCESSED_CSVPATH = 'index/processed.csv'
-INDEX_ERRORS_CSVPATH = 'index/error.csv'
-INDEX_DATE_CSVPATH = 'index/date.csv'
-INDEX_NODOI_CSVPATH = 'index/nodoi.csv'
-INDEX_FILE_CSVPATH = 'index/file.csv'
+LOOKUP_CSV = 'lookup.csv'
+INDEX_PROCESSED_CSVPATH = 'index/'
+INDEX_ERRORS_CSVPATH = 'index/'
+INDEX_DATE_CSVPATH = 'index/'
+INDEX_NODOI_CSVPATH = 'index/'
+INDEX_FILE_CSVPATH = 'index/'
 
 INPUT_DATA_PATH = 'crossrefdump/'
 
@@ -64,7 +65,7 @@ date_dic = {}
 file_dic = {}
 
 
-# In[16]:
+# In[100]:
 
 ############### Methods to write on CSV files
 
@@ -78,16 +79,20 @@ file_dic = {}
 
 #create new file with header
 def init_csv(csv_path,header):
-    with open(csv_path, 'w') as csvfile:
-        csvfile.write(header)
+    check_make_dirs(csv_path)
+    if not os.path.isfile(csv_path):
+        with open(csv_path, 'w') as csvfile:
+            csvfile.write(header)
 
 #write on a csv_path file a given block_txt 
 def write_txtblock_on_csv(csv_path, block_txt):
+    check_make_dirs(csv_path)
     with open(csv_path, 'a', newline='') as csvfile:
         csvfile.write(block_txt)
 
 #write on a csv_path file a given rows (a list of values)
 def write_rows_on_csv(csv_path, row_lis, csvid = None, quoting_flag= True):
+    check_make_dirs(csv_path)
     block_txt = ""
     for row in row_lis:
         row_txt = ""
@@ -106,9 +111,66 @@ def write_rows_on_csv(csv_path, row_lis, csvid = None, quoting_flag= True):
     with open(csv_path, 'a', newline='') as csvfile:
         csvfile.write(block_txt) 
 
+def check_make_dirs(filename) :       
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
 
-# In[17]:
 
+# In[101]:
+
+def init_dirs_skeleton():
+    global INDEX_PROCESSED_CSVPATH,INDEX_ERRORS_CSVPATH,INDEX_DATE_CSVPATH,INDEX_NODOI_CSVPATH,INDEX_FILE_CSVPATH
+    
+    check_make_dirs(OUT_DATA_PATH)
+    check_make_dirs(OUT_PROV_PATH)
+    check_make_dirs(INDEX_PROCESSED_CSVPATH)
+    check_make_dirs(INDEX_ERRORS_CSVPATH)
+    check_make_dirs(INDEX_DATE_CSVPATH)
+    check_make_dirs(INDEX_NODOI_CSVPATH)
+    check_make_dirs(INDEX_FILE_CSVPATH)
+    
+    init_csv("%sd-%s.csv"%(OUT_DATA_PATH,str(0)),'oci,citing,cited,creation,timestamp')
+    init_csv("%sp-%s.csv"%(OUT_PROV_PATH,str(0)),'oci,agent,source,datetime')
+    
+    INDEX_PROCESSED_CSVPATH = "%sprocessed.csv"%(INDEX_PROCESSED_CSVPATH)
+    init_csv(INDEX_PROCESSED_CSVPATH,'id')
+    
+    INDEX_ERRORS_CSVPATH = "%serror.csv"%(INDEX_ERRORS_CSVPATH)
+    init_csv(INDEX_ERRORS_CSVPATH,'id,type')
+    
+    INDEX_DATE_CSVPATH = "%sdate.csv"%(INDEX_DATE_CSVPATH)
+    init_csv(INDEX_DATE_CSVPATH,'id,value,format')
+    
+    INDEX_NODOI_CSVPATH = "%snodoi.csv"%(INDEX_NODOI_CSVPATH)
+    init_csv(INDEX_NODOI_CSVPATH,'citing,cited,text')
+    
+    INDEX_FILE_CSVPATH = "%sfile.csv"%(INDEX_FILE_CSVPATH)
+    init_csv(INDEX_FILE_CSVPATH,'id')
+
+def init_lookup_path(val):
+    global LOOKUP_CSV
+    LOOKUP_CSV = val
+    
+def init_file_entries(val):
+    global MAX_DATA_ENTRIES
+    MAX_DATA_ENTRIES = int(val)
+    
+def init_num_ite(val):
+    global NUMBER_ITERATIONS
+    NUMBER_ITERATIONS = int(val)
+
+def init_timeout(val):
+    global REQUEST_TIMEOUT
+    REQUEST_TIMEOUT = int(val)
+    
+def init_sleep_time(val):
+    global REQ_SLEEP_TIME
+    REQ_SLEEP_TIME = int(val)
+    
 def init_input_paths(input_o):
     global INPUT_DATA_PATH
     INPUT_DATA_PATH = "%s/"%input_o
@@ -116,7 +178,6 @@ def init_input_paths(input_o):
 def init_output_paths(out_o):
     global OUT_DATA_PATH
     global OUT_PROV_PATH
-    global LOOKUP_CSVPATH
     global INDEX_PROCESSED_CSVPATH 
     global INDEX_ERRORS_CSVPATH 
     global INDEX_DATE_CSVPATH 
@@ -125,16 +186,15 @@ def init_output_paths(out_o):
     
     OUT_DATA_PATH = "%s/data/"%out_o
     OUT_PROV_PATH = "%s/prov/"%out_o
-    LOOKUP_CSVPATH = '%s/index/lookup.csv'%out_o
-    INDEX_PROCESSED_CSVPATH = '%s/index/processed.csv'%out_o
-    INDEX_ERRORS_CSVPATH = '%s/index/error.csv'%out_o
-    INDEX_DATE_CSVPATH = '%s/index/date.csv'%out_o
-    INDEX_NODOI_CSVPATH = '%s/index/nodoi.csv'%out_o
-    INDEX_FILE_CSVPATH = '%s/index/file.csv'%out_o
+    INDEX_PROCESSED_CSVPATH = '%s/index/'%out_o
+    INDEX_ERRORS_CSVPATH = '%s/index/'%out_o
+    INDEX_DATE_CSVPATH = '%s/index/'%out_o
+    INDEX_NODOI_CSVPATH = '%s/index/'%out_o
+    INDEX_FILE_CSVPATH = '%s/index/'%out_o
 
 #init the lookup_dic by the contents of its corresponding csv
 def init_lookup_dic():
-    with open(LOOKUP_CSVPATH,'r') as lookupcsv:
+    with open(LOOKUP_CSV,'r') as lookupcsv:
         lookupcsv_reader = csv.DictReader(lookupcsv)
         for row in lookupcsv_reader:
             lookup_dic[row['c']] = row['code']
@@ -148,14 +208,15 @@ def update_lookup(c):
     calc_next_lookup_code()
     code = lookup_code  
     global lookup_dic
-    lookup_dic[c] = code
-    #add it on the csv
-    write_txtblock_on_csv(LOOKUP_CSVPATH, '\n"%s","%s"'%(c,code))
+    if c not in lookup_dic:
+        lookup_dic[c] = code
+        write_txtblock_on_csv(LOOKUP_CSV, '\n"%s","%s"'%(c,code))
 
 def update_date(dateObj, ci_key):
     global date_dic
-    date_dic[ci_key] = dateObj
-    write_txtblock_on_csv(INDEX_DATE_CSVPATH, "\n"+ci_key+","+dateObj["str_val"]+","+str(dateObj["format"]))
+    if ci_key not in date_dic:
+        date_dic[ci_key] = dateObj
+        write_txtblock_on_csv(INDEX_DATE_CSVPATH, "\n"+ci_key+","+dateObj["str_val"]+","+str(dateObj["format"]))
     
 def init_date_dic():
     with open(INDEX_DATE_CSVPATH,'r') as csvfile:
@@ -166,8 +227,9 @@ def init_date_dic():
             
 def update_processed(ci_key):
     global processed_dic
-    processed_dic[ci_key] = 1
-    write_txtblock_on_csv(INDEX_PROCESSED_CSVPATH, "\n"+ci_key)
+    if ci_key not in processed_dic:
+        processed_dic[ci_key] = 1
+        write_txtblock_on_csv(INDEX_PROCESSED_CSVPATH, "\n"+ci_key)
     
 def init_processed_dic():
     with open(INDEX_PROCESSED_CSVPATH,'r') as csvfile:
@@ -189,11 +251,23 @@ def init_file_dic():
             
 def update_file_index(file_id):
     global processed_dic
-    processed_dic[file_id] = 1
-    write_txtblock_on_csv(INDEX_FILE_CSVPATH, "\n"+file_id)
+    if file_id not in file_dic:
+        file_dic[file_id] = 1
+        write_txtblock_on_csv(INDEX_FILE_CSVPATH, "\n"+file_id)
             
 #populate all the dictionaries data
 def reload():
+    
+    init_dirs_skeleton()
+    
+    #reset dictionaries
+    global lookup_code,lookup_dic,processed_dic,date_dic,file_dic
+    lookup_code = 0
+    lookup_dic = {}
+    processed_dic = {}
+    date_dic = {}
+    file_dic = {}
+    
     init_lookup_dic()
     init_file_dic()
     init_processed_dic()
@@ -225,7 +299,7 @@ def reload():
     file_id = maxid
 
 
-# In[18]:
+# In[102]:
 
 ###############  Convert CrossRef DOI to CI
 def calc_next_lookup_code():  
@@ -265,42 +339,52 @@ def reverse_ci_to_doi(str_val):
     return "10."+str_doi
 
 
-# In[ ]:
-
-
-
-
-# In[19]:
+# In[92]:
 
 #build a bib citation with all the available info inside the reference object 
 def build_bibc(obj):
     
+    unstructured = ""
     if 'unstructured' in obj:
-        return obj['unstructured']
-    else:
-        #all att values are already in string format
-        bibc = ""
-        strspan= " "
-        if 'author' in obj:
-            bibc = bibc + obj['author'] + strspan          
-        if 'year' in obj:
-            bibc = bibc + obj['year'] + strspan
-        if 'article-title' in obj:
-            bibc = bibc + obj['article-title'] + strspan
-        if 'volume-title' in obj:
-            bibc = bibc + obj['volume-title'] + strspan
-        if 'journal-title' in obj:
-            bibc = bibc + obj['journal-title'] + strspan
-        if 'volume' in obj:
-            bibc = bibc + obj['volume'] + strspan
-        if 'first-page' in obj:
-            bibc = bibc + obj['first-page'] + strspan
-        if 'last-page' in obj:
-            bibc = bibc + obj['last-page'] + strspan
-        return bibc
+        unstructured = obj['unstructured']
+
+    #all att values are already in string format
+    bibc = ""
+    strspan= " "
+    fields = [
+        'issue'
+        ,'first-page'
+        ,'volume'
+        ,'edition'
+        ,'component'
+        ,'standard-designator'
+        ,'standards-body'
+        ,'author'
+        ,'year'
+        ,'journal-title'
+        ,'article-title'
+        ,'series-title'
+        ,'volume-title'
+        ,'ISSN'
+        ,'issn-type'
+        ,'ISBN'
+        ,'isbn-type'
+    ]
+    
+    for f in fields:
+        if f in obj:
+            if obj[f] not in unstructured:
+                val_str = obj[f]
+                if f == 'ISBN':
+                    val_str = val_str.replace('http://id.crossref.org/isbn/','')
+                #if f == 'ISSN':
+                #    obj[f] = obj[f].replace('http://id.crossref.org/issn/','')
+                bibc = bibc + val_str + strspan
+    
+    return bibc+unstructured
 
 
-# In[20]:
+# In[103]:
 
 #call crossref with the corresponding crossref_api[query_type] and the query_text 
 def get_data(query_text, is_json = True, query_type = "free_text", num_iterations= 1, sleep_time= 60,req_timeout= None):
@@ -308,7 +392,7 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
     errors = ""
     for i in range(0,num_iterations):
         api_call = api_url % (urllib.parse.quote_plus(query_text))
-        #print(api_call)
+        print(api_call)
         try:
             response = requests.get(api_call, headers={"User-Agent": conf["useragent"]}, timeout= req_timeout)
             if (response.status_code == 200):
@@ -329,7 +413,7 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
              
 
 
-# In[21]:
+# In[104]:
 
 #generate the publication-date of a given crossref work object
 def build_pubdate(obj, ci):
@@ -376,7 +460,7 @@ def build_pubdate(obj, ci):
  
 
 
-# In[22]:
+# In[105]:
 
 # given a textual input (query_txt), call crossref and retrieves the work object of 
 # the best scoring result in case the score is higher than MIN_SCORE
@@ -403,7 +487,7 @@ def find_work(query_txt):
     return res
 
 
-# In[23]:
+# In[106]:
 
 def process_list_items(obj, obj_file_id):
     if obj_file_id not in file_dic:
@@ -477,7 +561,7 @@ def process_item(obj):
                         oci = citing_ci+"-"+ref_entry_attr['cited_ci']
                         
                         timestamp = ""
-                        if ((citing_date["format"] != -1) and (ref_entry_attr['cited_date']["format"] != -1)):
+                        if citing_date["str_val"] != "" and ref_entry_attr['cited_date']["str_val"] != "":
                             
                             citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
                             cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
@@ -486,7 +570,7 @@ def process_item(obj):
                         data_txtblock = data_txtblock +"\n"+ oci+","+citing_doi+","+ref_entry_attr['cited_doi']+","+citing_date["str_val"]+","+timestamp
                         
                         timenow = str(datetime.datetime.now().replace(microsecond=0))
-                        prov_txtblock = prov_txtblock +"\n"+ oci+","+conf["useragent"]+","+crossref_api['doi']+citing_doi+","+timenow
+                        prov_txtblock = prov_txtblock +"\n"+ oci+","+conf["useragent"]+","+crossref_api['doi']%(citing_doi)+","+timenow
                     #we have errors
                     else:
                         #break all and return the errors
@@ -520,7 +604,7 @@ def process_ref_entry(obj):
         else:
             #if my new object have a doi now
             if "DOI" in obj:
-                cited_doi = obj["DOI"]
+                cited_doi = obj["DOI"].lower()
                 cited_ci = convert_doi_to_ci(cited_doi)
 
                 #check if obj have a publcation date, 
@@ -542,16 +626,51 @@ def process_ref_entry(obj):
 
 
 
-# In[24]:
+# init_input_paths("crossrefdump")
+# init_output_paths("process")
+# reload()
+#     
+# print(INPUT_DATA_PATH)
+# #iterate all the input data and process the json files
+# for subdir, dirs, files in os.walk(INPUT_DATA_PATH):
+#     for file in files:
+#         if file.lower().endswith('.json'):
+#             print(file)
+#             data = json.load(open(os.path.join(subdir, file)))
+#             matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
+#             cur_id = int(matchObj.group(1))
+#             process_list_items(data,cur_id)
+
+# In[69]:
 
 
 if __name__ == "__main__":
     arg_parser = ArgumentParser("cociprocess.py", description="Process a crossref JSON files.")
     
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The directory where of the crossref data dump.") 
-    arg_parser.add_argument("-o", "--output_dir", dest="output_dir", required=False, help="The directory where the output and processing results are stored.")    
+    arg_parser.add_argument("-out", "--output_dir", dest="output_dir", required=False, help="The directory where the output and processing results are stored.")    
+    arg_parser.add_argument("-iterations", dest="num_ite", required=False, help="Maximum number of GET requests.") 
+    arg_parser.add_argument("-timeout", dest="timeout", required=False, help="Number of seconds before declaring a GET in timeout.") 
+    arg_parser.add_argument("-sleep", dest="sleep_time", required=False, help="Seconds of sleeping time between a GET request and a second try.") 
+    arg_parser.add_argument("-data", dest="file_entries", required=False, help="The number of entries for each csv generated.") 
+    arg_parser.add_argument("-lookup", dest="lookup_file_path", required=False, help="The lookup file full path (with file name).") 
     
     args = arg_parser.parse_args()
+    
+    if args.lookup_file_path:
+        init_lookup_path(args.lookup_file_path)
+    
+    if args.file_entries:
+        init_file_entries(args.file_entries)
+    
+    if args.num_ite:
+        init_num_ite(args.num_ite)
+    
+    if args.timeout:
+        init_timeout(args.timeout)
+        
+    if args.sleep_time:
+        init_sleep_time(args.sleep_time)
     
     if args.input_dir:
         init_input_paths(args.input_dir)
@@ -566,8 +685,8 @@ if __name__ == "__main__":
     #iterate all the input data and process the json files
     for subdir, dirs, files in os.walk(INPUT_DATA_PATH):
         for file in files:
-            print(file)
             if file.lower().endswith('.json'):
+                print(file)
                 data = json.load(open(os.path.join(subdir, file)))
                 matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
                 cur_id = int(matchObj.group(1))
