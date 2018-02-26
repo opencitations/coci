@@ -215,7 +215,7 @@ def reload():
                     last_file = file.lower()
     
     dic_items = {}
-    with open("%s%s"%(OUT_DATA_PATH,last_file), 'r') as f:
+    with open("%s%s"%(OUT_DATA_PATH,last_file), 'r') as csvfile:
         csv_reader = csv.DictReader(csvfile)
         for row in csv_reader:
             dic_items[row['citing']] = 1
