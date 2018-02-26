@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[99]:
+# In[130]:
 
 from requests.exceptions import ReadTimeout, ConnectTimeout
 import os
@@ -65,7 +65,7 @@ date_dic = {}
 file_dic = {}
 
 
-# In[100]:
+# In[131]:
 
 ############### Methods to write on CSV files
 
@@ -120,7 +120,7 @@ def check_make_dirs(filename) :
                 raise
 
 
-# In[101]:
+# In[132]:
 
 def init_dirs_skeleton():
     global INDEX_PROCESSED_CSVPATH,INDEX_ERRORS_CSVPATH,INDEX_DATE_CSVPATH,INDEX_NODOI_CSVPATH,INDEX_FILE_CSVPATH
@@ -299,7 +299,7 @@ def reload():
     file_id = maxid
 
 
-# In[102]:
+# In[133]:
 
 ###############  Convert CrossRef DOI to CI
 def calc_next_lookup_code():  
@@ -339,7 +339,7 @@ def reverse_ci_to_doi(str_val):
     return "10."+str_doi
 
 
-# In[92]:
+# In[134]:
 
 #build a bib citation with all the available info inside the reference object 
 def build_bibc(obj):
@@ -384,7 +384,7 @@ def build_bibc(obj):
     return bibc+unstructured
 
 
-# In[103]:
+# In[135]:
 
 #call crossref with the corresponding crossref_api[query_type] and the query_text 
 def get_data(query_text, is_json = True, query_type = "free_text", num_iterations= 1, sleep_time= 60,req_timeout= None):
@@ -392,7 +392,7 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
     errors = ""
     for i in range(0,num_iterations):
         api_call = api_url % (urllib.parse.quote_plus(query_text))
-        print(api_call)
+        #print(api_call)
         try:
             response = requests.get(api_call, headers={"User-Agent": conf["useragent"]}, timeout= req_timeout)
             if (response.status_code == 200):
@@ -413,7 +413,7 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
              
 
 
-# In[104]:
+# In[136]:
 
 #generate the publication-date of a given crossref work object
 def build_pubdate(obj, ci):
@@ -460,7 +460,7 @@ def build_pubdate(obj, ci):
  
 
 
-# In[105]:
+# In[137]:
 
 # given a textual input (query_txt), call crossref and retrieves the work object of 
 # the best scoring result in case the score is higher than MIN_SCORE
@@ -487,7 +487,7 @@ def find_work(query_txt):
     return res
 
 
-# In[106]:
+# In[138]:
 
 def process_list_items(obj, obj_file_id):
     if obj_file_id not in file_dic:
@@ -591,6 +591,16 @@ def process_ref_entry(obj):
     
     nodoi_text = -1
     
+    #save the year in case i don't have a date
+    my_year = {"str_val":"","format":-1}
+    if "year" in obj:
+        try:
+            date_val = datetime.date(int(obj['year']),1,1)
+            date_in_str = date_val.strftime('%Y')
+            my_year = {"str_val": date_in_str,"format": '%Y'}
+        except:
+            pass
+    
     #check if obj have a DOI if not call crossref
     if "DOI" not in obj :
         query_text = build_bibc(obj)
@@ -613,9 +623,12 @@ def process_ref_entry(obj):
                 
                 #in case i don't have a date, try look at it again
                 if cited_date["format"] == -1 :
+                        
                     obj = get_data(cited_doi, query_type = "doi", num_iterations=NUMBER_ITERATIONS, sleep_time=REQ_SLEEP_TIME, req_timeout=REQUEST_TIMEOUT)
                     if "errors" not in obj:
                         cited_date = build_pubdate(obj['message'],cited_ci)
+                        if cited_date["str_val"] == "":
+                            cited_date = my_year
                 
                 #update dates
                 update_date(cited_date, cited_ci)
@@ -681,7 +694,8 @@ if __name__ == "__main__":
     
     reload()
     
-    print(INPUT_DATA_PATH)
+    print("Process starts at: "+str(datetime.datetime.now().replace(microsecond=0)))
+    print("The input data: "+INPUT_DATA_PATH)
     #iterate all the input data and process the json files
     for subdir, dirs, files in os.walk(INPUT_DATA_PATH):
         for file in files:
