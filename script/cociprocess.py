@@ -1,26 +1,19 @@
 
-# coding: utf-8
-
-# In[130]:
-
-from requests.exceptions import ReadTimeout, ConnectTimeout
 import os
 from argparse import ArgumentParser
 import json
 import requests
+from requests.exceptions import ReadTimeout, ConnectTimeout
 import sys
 import urllib.parse
-import datetime
 import csv
 import re
 import errno
+import datetime
 from time import sleep
-from duration import (
-    to_iso8601,
-    to_seconds,
-    to_timedelta,
-    to_tuple,
-)
+from dateutil.relativedelta import relativedelta
+from dateutil.parser import parse
+import citation
 
 conf = {
     "email": "ivan.heibi2@unibo.it",
@@ -63,9 +56,6 @@ lookup_dic = {}
 processed_dic = {}
 date_dic = {}
 file_dic = {}
-
-
-# In[131]:
 
 ############### Methods to write on CSV files
 
@@ -118,9 +108,6 @@ def check_make_dirs(filename) :
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 raise
-
-
-# In[132]:
 
 def init_dirs_skeleton():
     global INDEX_PROCESSED_CSVPATH,INDEX_ERRORS_CSVPATH,INDEX_DATE_CSVPATH,INDEX_NODOI_CSVPATH,INDEX_FILE_CSVPATH
@@ -298,9 +285,6 @@ def reload():
     datacsv_counter = len(dic_items)
     file_id = maxid
 
-
-# In[133]:
-
 ###############  Convert CrossRef DOI to CI
 def calc_next_lookup_code():
     global lookup_code
@@ -337,9 +321,6 @@ def reverse_ci_to_doi(str_val):
                     str_doi = str_doi + key
         i += 2
     return "10."+str_doi
-
-
-# In[134]:
 
 #build a bib citation with all the available info inside the reference object
 def build_bibc(obj):
@@ -383,9 +364,6 @@ def build_bibc(obj):
 
     return bibc+unstructured
 
-
-# In[135]:
-
 #call crossref with the corresponding crossref_api[query_type] and the query_text
 def get_data(query_text, is_json = True, query_type = "free_text", num_iterations= 1, sleep_time= 60,req_timeout= None):
     api_url = crossref_api[query_type]
@@ -412,9 +390,6 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
     return {"errors": errors}
 
 
-
-# In[136]:
-
 #generate the publication-date of a given crossref work object
 def build_pubdate(obj, ci):
 
@@ -436,7 +411,6 @@ def build_pubdate(obj, ci):
                     except:
                         pass
 
-                #I have a date , so generate it
                 #I have a date , so generate it
                 if (listdate[0] != 1):
                     date_val = datetime.date(listdate[0], listdate[1], listdate[2])
@@ -464,9 +438,6 @@ def build_pubdate(obj, ci):
     return {"str_val":"","format":-1}
 
 
-
-# In[137]:
-
 # given a textual input (query_txt), call crossref and retrieves the work object of
 # the best scoring result in case the score is higher than MIN_SCORE
 def find_work(query_txt):
@@ -490,9 +461,6 @@ def find_work(query_txt):
         except IndexError:
                 return -1
     return res
-
-
-# In[138]:
 
 def process_list_items(obj, obj_file_id):
     if obj_file_id not in file_dic:
@@ -648,7 +616,6 @@ def process_ref_entry(obj):
         return -1
 
 
-
 # init_input_paths("crossrefdump")
 # init_output_paths("process")
 # reload()
@@ -663,8 +630,6 @@ def process_ref_entry(obj):
 #             matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
 #             cur_id = int(matchObj.group(1))
 #             process_list_items(data,cur_id)
-
-# In[69]:
 
 
 if __name__ == "__main__":
@@ -715,6 +680,3 @@ if __name__ == "__main__":
                 matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
                 cur_id = int(matchObj.group(1))
                 process_list_items(data,cur_id)
-
-
-# In[ ]:
