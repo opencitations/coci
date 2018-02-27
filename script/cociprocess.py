@@ -640,7 +640,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-iterations", dest="num_ite", required=False, help="Maximum number of GET requests.")
     arg_parser.add_argument("-timeout", dest="timeout", required=False, help="Number of seconds before declaring a GET in timeout.")
     arg_parser.add_argument("-sleep", dest="sleep_time", required=False, help="Seconds of sleeping time between a GET request and a second try.")
-    arg_parser.add_argument("-data", dest="file_entries", required=False, help="The number of entries for each csv generated.")
+    arg_parser.add_argument("-data", dest="entries_x_file", required=False, help="The number of entries for each csv generated.")
     arg_parser.add_argument("-lookup", dest="lookup_file_path", required=False, help="The lookup file full path (with file name).")
 
     args = arg_parser.parse_args()
@@ -648,8 +648,8 @@ if __name__ == "__main__":
     if args.lookup_file_path:
         init_lookup_path(args.lookup_file_path)
 
-    if args.file_entries:
-        init_file_entries(args.file_entries)
+    if args.entries_x_file:
+        init_file_entries(args.entries_x_file)
 
     if args.num_ite:
         init_num_ite(args.num_ite)
