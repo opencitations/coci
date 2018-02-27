@@ -632,6 +632,7 @@ def process_ref_entry(obj):
 #             process_list_items(data,cur_id)
 
 
+
 if __name__ == "__main__":
     arg_parser = ArgumentParser("cociprocess.py", description="Process a crossref JSON files.")
 
@@ -640,7 +641,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-iterations", dest="num_ite", required=False, help="Maximum number of GET requests.")
     arg_parser.add_argument("-timeout", dest="timeout", required=False, help="Number of seconds before declaring a GET in timeout.")
     arg_parser.add_argument("-sleep", dest="sleep_time", required=False, help="Seconds of sleeping time between a GET request and a second try.")
-    arg_parser.add_argument("-data", dest="entries_x_file", required=False, help="The number of entries for each csv generated.")
+    arg_parser.add_argument("-data", dest="file_entries", required=False, help="The number of entries for each csv generated.")
     arg_parser.add_argument("-lookup", dest="lookup_file_path", required=False, help="The lookup file full path (with file name).")
 
     args = arg_parser.parse_args()
@@ -648,8 +649,8 @@ if __name__ == "__main__":
     if args.lookup_file_path:
         init_lookup_path(args.lookup_file_path)
 
-    if args.entries_x_file:
-        init_file_entries(args.entries_x_file)
+    if args.file_entries:
+        init_file_entries(args.file_entries)
 
     if args.num_ite:
         init_num_ite(args.num_ite)
@@ -669,7 +670,7 @@ if __name__ == "__main__":
 
     reload()
 
-    print("Process starts at: "+str(datetime.datetime.now().replace(microsecond=0)))
+    print("Processing started "+str(datetime.datetime.now().replace(microsecond=0)))
     print("The input data: "+INPUT_DATA_PATH)
     #iterate all the input data and process the json files
     for subdir, dirs, files in os.walk(INPUT_DATA_PATH):
@@ -680,3 +681,5 @@ if __name__ == "__main__":
                 matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
                 cur_id = int(matchObj.group(1))
                 process_list_items(data,cur_id)
+
+    print("Processing finished "+str(datetime.datetime.now().replace(microsecond=0)))
