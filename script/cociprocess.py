@@ -570,7 +570,12 @@ def process_item(obj):
 
                             citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
                             cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
-                            timestamp = to_iso8601(citing_dt - cited_dt)
+
+                            #timestamp = to_iso8601(citing_dt - cited_dt)
+                            delta = relativedelta(citing_dt, cited_dt)
+                            timestamp = citation.Citation.get_duration(delta,
+                                                              citation.Citation.contains_months(citing_date["str_val"]) and citation.Citation.contains_months(ref_entry_attr['cited_date']["str_val"]),
+                                                              citation.Citation.contains_days(citing_date["str_val"]) and citation.Citation.contains_days(ref_entry_attr['cited_date']["str_val"]))
 
                         data_txtblock = data_txtblock +"\n"+ oci+","+citing_doi+","+ref_entry_attr['cited_doi']+","+citing_date["str_val"]+","+timestamp
 
