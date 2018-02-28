@@ -120,7 +120,7 @@ def init_dirs_skeleton():
     check_make_dirs(INDEX_NODOI_CSVPATH)
     check_make_dirs(INDEX_FILE_CSVPATH)
 
-    init_csv("%sd-%s.csv"%(OUT_DATA_PATH,str(0)),'oci,citing,cited,creation,timestamp')
+    init_csv("%sd-%s.csv"%(OUT_DATA_PATH,str(0)),'oci,citing,cited,creation,timespan')
     init_csv("%sp-%s.csv"%(OUT_PROV_PATH,str(0)),'oci,agent,source,datetime')
 
     INDEX_PROCESSED_CSVPATH = "%sprocessed.csv"%(INDEX_PROCESSED_CSVPATH)
@@ -482,7 +482,7 @@ def process_list_items(obj, obj_file_id):
                     if (datacsv_counter // MAX_DATA_ENTRIES == 1):
                         datacsv_counter = 0
                         file_id += 1
-                        init_csv("%sd-%s.csv"%(OUT_DATA_PATH,str(file_id)),'oci,citing,cited,creation,timestamp')
+                        init_csv("%sd-%s.csv"%(OUT_DATA_PATH,str(file_id)),'oci,citing,cited,creation,timespan')
                         init_csv("%sp-%s.csv"%(OUT_PROV_PATH,str(file_id)),'oci,agent,source,datetime')
 
                     if csvdata["data"] != "":
@@ -533,19 +533,19 @@ def process_item(obj):
                         #create all other data needed
                         oci = citing_ci+"-"+ref_entry_attr['cited_ci']
 
-                        timestamp = ""
+                        timespan = ""
                         if citing_date["str_val"] != "" and ref_entry_attr['cited_date']["str_val"] != "":
 
                             citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
                             cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
 
-                            #timestamp = to_iso8601(citing_dt - cited_dt)
+                            #timespan = to_iso8601(citing_dt - cited_dt)
                             delta = relativedelta(citing_dt, cited_dt)
-                            timestamp = citation.Citation.get_duration(delta,
+                            timespan = citation.Citation.get_duration(delta,
                                                               citation.Citation.contains_months(citing_date["str_val"]) and citation.Citation.contains_months(ref_entry_attr['cited_date']["str_val"]),
                                                               citation.Citation.contains_days(citing_date["str_val"]) and citation.Citation.contains_days(ref_entry_attr['cited_date']["str_val"]))
 
-                        data_txtblock = data_txtblock +"\n"+ oci+","+citing_doi+","+ref_entry_attr['cited_doi']+","+citing_date["str_val"]+","+timestamp
+                        data_txtblock = data_txtblock +"\n"+ oci+","+citing_doi+","+ref_entry_attr['cited_doi']+","+citing_date["str_val"]+","+timespan
 
                         timenow = str(datetime.datetime.now().replace(microsecond=0))
                         prov_txtblock = prov_txtblock +"\n"+ oci+","+conf["useragent"]+","+crossref_api['doi']%(citing_doi)+","+timenow
