@@ -18,7 +18,8 @@ import citation
 conf = {
     "email": "ivan.heibi2@unibo.it",
     "key": None,
-    "useragent": "cociprocess",
+    "agent": "COCI Maker",
+    "useragent": "COCI / Maker (via OpenCitations - http://opencitations.net)",
     "postfix": "00000"
 }
 
@@ -130,7 +131,7 @@ def init_dirs_skeleton():
     init_csv(INDEX_ERRORS_CSVPATH,'id,type')
 
     INDEX_DATE_CSVPATH = "%sdate.csv"%(INDEX_DATE_CSVPATH)
-    init_csv(INDEX_DATE_CSVPATH,'id,value,format')
+    init_csv(INDEX_DATE_CSVPATH,'id,value')
 
     INDEX_NODOI_CSVPATH = "%snodoi.csv"%(INDEX_NODOI_CSVPATH)
     init_csv(INDEX_NODOI_CSVPATH,'citing,cited,text')
@@ -199,24 +200,24 @@ def update_lookup(c):
         lookup_dic[c] = code
         write_txtblock_on_csv(LOOKUP_CSV, '\n"%s","%s"'%(c,code))
 
-def update_date(dateObj, ci_key):
+def update_date(date_val, doi_key):
     global date_dic
-    if ci_key not in date_dic:
-        date_dic[ci_key] = dateObj
-        write_txtblock_on_csv(INDEX_DATE_CSVPATH, "\n"+ci_key+","+dateObj["str_val"]+","+str(dateObj["format"]))
+    if doi_key not in date_dic:
+        date_dic[doi_key] = date_val
+        write_txtblock_on_csv(INDEX_DATE_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(doi_key),date_val))
 
 def init_date_dic():
     with open(INDEX_DATE_CSVPATH,'r') as csvfile:
         csv_reader = csv.DictReader(csvfile)
         global date_dic
         for row in csv_reader:
-            date_dic[row['id']] = {"str_val": row['value'],"format": row['format']}
+            date_dic[row['id']] = row['value']
 
-def update_processed(ci_key):
+def update_processed(doi_key):
     global processed_dic
-    if ci_key not in processed_dic:
-        processed_dic[ci_key] = 1
-        write_txtblock_on_csv(INDEX_PROCESSED_CSVPATH, "\n"+ci_key)
+    if doi_key not in processed_dic:
+        processed_dic[doi_key] = 1
+        write_txtblock_on_csv(INDEX_PROCESSED_CSVPATH, '\n"%s"'%(escape_inner_quotes(doi_key)))
 
 def init_processed_dic():
     with open(INDEX_PROCESSED_CSVPATH,'r') as csvfile:
@@ -226,7 +227,7 @@ def init_processed_dic():
             processed_dic[row['id']] = 1
 
 def update_nodoi(citing, cited, text):
-    write_txtblock_on_csv(INDEX_NODOI_CSVPATH, '\n%s,%s,"%s"'%(citing,cited,text))
+    write_txtblock_on_csv(INDEX_NODOI_CSVPATH, '\n"%s","%s","%s"'%(escape_inner_quotes(citing),escape_inner_quotes(cited),escape_inner_quotes(text)))
 
 
 def init_file_dic():
@@ -237,7 +238,7 @@ def init_file_dic():
             file_dic[row['id']] = 1
 
 def update_file_index(file_id):
-    global processed_dic
+    #global processed_dic
     if file_id not in file_dic:
         file_dic[file_id] = 1
         write_txtblock_on_csv(INDEX_FILE_CSVPATH, "\n"+file_id)
@@ -391,10 +392,10 @@ def get_data(query_text, is_json = True, query_type = "free_text", num_iteration
 
 
 #generate the publication-date of a given crossref work object
-def build_pubdate(obj, ci):
+def build_pubdate(obj, doi_val):
 
-    if ci in date_dic:
-        return date_dic[ci]
+    if doi_val in date_dic:
+        return date_dic[doi_val]
 
     if 'issued' in obj:
         if 'date-parts' in obj['issued']:
@@ -404,8 +405,10 @@ def build_pubdate(obj, ci):
 
                 #lisdate[year,month,day]
                 listdate = [1,1,1]
+                dateparts = []
                 for i in range(0,len(obj_date)):
                     try:
+                        dateparts.append(obj_date[i])
                         intvalue = int(obj_date[i])
                         listdate[i] = intvalue
                     except:
@@ -417,25 +420,23 @@ def build_pubdate(obj, ci):
 
                     dformat = '%Y'
 
-                    if (listdate[1] != 1):
-                        dformat = dformat + '-%m'
+                    #only month is specified
+                    if len(dateparts) == 2 :
+                        dformat = '%Y-%m'
+                    else:
+                        if len(dateparts) == 3 and ((dateparts[1] != 1 and dateparts[2] != 1) or (dateparts[1] == 1 and dateparts[2] != 1)):
+                            dformat = '%Y-%m-%d'
 
-                    if (listdate[2] != 1):
-                        dformat = dformat + '-%d'
-
-
-                    #e.g: 2016/3/1
                     date_in_str = date_val.strftime(dformat)
-
-                    dateobj = {"str_val": date_in_str, "format":  dformat}
-                    #date_dic[ci] = dateobj
-                    return dateobj
+                    #dateobj = {"str_val": date_in_str, "format":  dformat}
+                    return date_in_str
 
             except IndexError:
                 pass
 
     #date_dic[ci] = {"str_val":"","format":-1}
-    return {"str_val":"","format":-1}
+    #return {"str_val":"","format":-1}
+    return ""
 
 
 # given a textual input (query_txt), call crossref and retrieves the work object of
@@ -473,7 +474,7 @@ def process_list_items(obj, obj_file_id):
             if csvdata != -1:
                 if "errors" in csvdata:
                     #write the errors
-                    write_txtblock_on_csv(INDEX_ERRORS_CSVPATH, '\n%s,"%s"'%(csvdata["citing_ci"],csvdata['errors']))
+                    write_txtblock_on_csv(INDEX_ERRORS_CSVPATH, '\n"%s","%s"'%(escape_inner_quotes(csvdata["citing_doi"]),csvdata['errors']))
 
                 else:
                     global datacsv_counter
@@ -493,7 +494,7 @@ def process_list_items(obj, obj_file_id):
                     #update files identifiers
                     datacsv_counter += 1
 
-                update_processed(csvdata["citing_ci"])
+                update_processed(csvdata["citing_doi"])
 
         update_file_index(str(obj_file_id))
 
@@ -507,13 +508,13 @@ def process_item(obj):
         print("Processing:"+obj["DOI"])
         citing_doi = obj["DOI"].lower()
         citing_ci = convert_doi_to_ci(citing_doi)
-        citing_date = build_pubdate(obj,citing_ci)
+        citing_date = build_pubdate(obj,citing_doi)
 
         #update dates
-        update_date(citing_date, citing_ci)
+        update_date(citing_date, citing_doi)
 
         #in case this is the first time i am elaborating this item
-        if citing_ci not in processed_dic:
+        if citing_doi not in processed_dic:
 
             data_txtblock = ""
             prov_txtblock = ""
@@ -522,41 +523,53 @@ def process_item(obj):
             for ref_item in obj['reference']:
 
                 ref_entry_attr = process_ref_entry(ref_item)
+                #in case a No-DOI request has been called
+                nodoi_text = ref_entry_attr["nodoi_text"]
+                if (nodoi_text != -1):
+                    citednodoi = ""
+                    if ref_entry_attr["value"] != -1:
+                        citednodoi = ref_entry_attr["value"]["cited_doi"]
+                    update_nodoi(citing_doi, citednodoi, nodoi_text)
 
+                ref_entry_attr = ref_entry_attr['value']
                 if(ref_entry_attr != -1):
                     if("errors" not in ref_entry_attr):
-
-                        #in case It was a No-DOI
-                        if (ref_entry_attr["nodoi_text"] != -1):
-                            update_nodoi(citing_ci, ref_entry_attr['cited_ci'], ref_entry_attr["nodoi_text"])
 
                         #create all other data needed
                         oci = citing_ci+"-"+ref_entry_attr['cited_ci']
 
                         timespan = ""
-                        if citing_date["str_val"] != "" and ref_entry_attr['cited_date']["str_val"] != "":
+                        if citing_date != "" and ref_entry_attr['cited_date'] != "":
 
-                            citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
-                            cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
+                            #citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
+                            #cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
+
+                            default_date = datetime.datetime(1970, 1, 1, 0, 0)
+                            citing_dt = parse(citing_date, default=default_date)
+                            cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
 
                             #timespan = to_iso8601(citing_dt - cited_dt)
                             delta = relativedelta(citing_dt, cited_dt)
                             timespan = citation.Citation.get_duration(delta,
-                                                              citation.Citation.contains_months(citing_date["str_val"]) and citation.Citation.contains_months(ref_entry_attr['cited_date']["str_val"]),
-                                                              citation.Citation.contains_days(citing_date["str_val"]) and citation.Citation.contains_days(ref_entry_attr['cited_date']["str_val"]))
+                                                              citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
+                                                              citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
 
-                        data_txtblock = data_txtblock +"\n"+ oci+","+citing_doi+","+ref_entry_attr['cited_doi']+","+citing_date["str_val"]+","+timespan
+                        if timespan != "":
+                            if timespan[0] == "-" and nodoi_text != -1:
+                                continue
 
-                        timenow = str(datetime.datetime.now().replace(microsecond=0))
-                        prov_txtblock = prov_txtblock +"\n"+ oci+","+conf["useragent"]+","+crossref_api['doi']%(citing_doi)+","+timenow
+                        data_txtblock = data_txtblock +'\n%s,"%s","%s",%s,%s'%(oci,escape_inner_quotes(citing_doi),escape_inner_quotes(ref_entry_attr['cited_doi']),citing_date,timespan)
+                        timenow = datetime.datetime.now().replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%S")
+                        prov_txtblock = prov_txtblock + '\n%s,%s,"%s",%s'%(oci,conf["agent"],"https://api.crossref.org/works/%s"%(escape_inner_quotes(citing_doi)),timenow)
+
                     #we have errors
                     else:
                         #break all and return the errors
-                        return {"errors": ref_entry_attr["errors"], "citing_ci": citing_ci}
+                        return {"errors": ref_entry_attr["errors"], "citing_doi": citing_doi}
                         break;
 
             return {
-                "citing_ci": citing_ci,
+                "citing_doi": citing_doi,
                 "data": data_txtblock,
                 "prov": prov_txtblock
             }
@@ -570,21 +583,15 @@ def process_ref_entry(obj):
     nodoi_text = -1
 
     #save the year in case i don't have a date
-    my_year = {"str_val":"","format":-1}
+    my_year = ""
     if "year" in obj:
-        try:
-            date_val = datetime.date(int(obj['year']),1,1)
-            date_in_str = date_val.strftime('%Y')
-            my_year = {"str_val": date_in_str,"format": '%Y'}
-        except:
-            pass
+            my_year = obj['year']
 
     #check if obj have a DOI if not call crossref
     if "DOI" not in obj :
         query_text = build_bibc(obj)
         obj = find_work(query_text)
-        if (obj != -1):
-            nodoi_text = query_text
+        nodoi_text = query_text
 
     if (obj != -1):
         if "errors" in obj:
@@ -597,24 +604,26 @@ def process_ref_entry(obj):
 
                 #check if obj have a publcation date,
                 #first case is true only if find_work has been called before
-                cited_date = build_pubdate(obj,cited_ci)
+                cited_date = build_pubdate(obj,cited_doi)
 
                 #in case i don't have a date, try look at it again
-                if cited_date["format"] == -1 :
+                if cited_date == "" :
 
                     obj = get_data(cited_doi, query_type = "doi", num_iterations=NUMBER_ITERATIONS, sleep_time=REQ_SLEEP_TIME, req_timeout=REQUEST_TIMEOUT)
                     if "errors" not in obj:
-                        cited_date = build_pubdate(obj['message'],cited_ci)
-                        if cited_date["str_val"] == "":
+                        cited_date = build_pubdate(obj['message'],cited_doi)
+                        if cited_date == "":
                             cited_date = my_year
 
                 #update dates
-                update_date(cited_date, cited_ci)
+                update_date(cited_date, cited_doi)
 
-                return {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date, 'nodoi_text':nodoi_text }
+                return {'value': {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date},'nodoi_text':nodoi_text}
     else:
-        return -1
+        return {'value': -1, 'nodoi_text': nodoi_text}
 
+def escape_inner_quotes(str_val):
+    return str_val.replace('"', '""')
 
 # init_input_paths("crossrefdump")
 # init_output_paths("process")
