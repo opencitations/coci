@@ -26,7 +26,7 @@ increment = 1000
 cursor_regex = ".+\"next-cursor\":\"([^\"]+)\".+"
 empty_regex = "\"items\":\[\]"
 crossref_query = "https://api.crossref.org/works?filter=reference-visibility:%s,has-references:true&" \
-                 "rows=%s&cursor=%s&mailto=%s"
+                 "rows=%s&cursor=%s"
 
 
 def create_dump(args):
@@ -73,7 +73,7 @@ def create_dump(args):
     tentative = 0
     while cursor is not None and cursor != "":
         try:
-            get_url = crossref_query % (visibility, increment, quote(cursor), conf["email"])
+            get_url = crossref_query % (visibility, increment, quote(cursor))
             print("Querying Crossref API: %s" % get_url)
 
             r = get(get_url, headers=headers, timeout=300)
