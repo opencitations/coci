@@ -424,7 +424,7 @@ def build_pubdate(obj, doi_val):
                     if len(dateparts) == 2 :
                         dformat = '%Y-%m'
                     else:
-                        if len(dateparts) == 3 and ((dateparts[1] != 1 and dateparts[2] != 1) or (dateparts[1] == 1 and dateparts[2] != 1)):
+                        if len(dateparts) == 3 and (dateparts[1] != 1 or (dateparts[1] == 1 and dateparts[2] != 1)):
                             dformat = '%Y-%m-%d'
 
                     date_in_str = date_val.strftime(dformat)
