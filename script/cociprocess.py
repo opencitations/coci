@@ -41,9 +41,9 @@ MAX_DATA_ENTRIES = 1000
 datacsv_counter = 0
 file_id = 0
 
-NUMBER_ITERATIONS = 1
-REQUEST_TIMEOUT = 60
-REQ_SLEEP_TIME = 10
+NUMBER_ITERATIONS = 2
+REQUEST_TIMEOUT = 120
+REQ_SLEEP_TIME = 60
 MIN_SCORE = 75
 crossref_api = {
     'free_text' : 'https://api.crossref.org/works?rows=1&query=%s',
