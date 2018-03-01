@@ -1,12 +1,15 @@
 
-# coding: utf-8
-
-# In[20]:
 
 import os
+from time import sleep
 from subprocess import Popen
 from argparse import ArgumentParser
 
+def done(p):
+    return p.poll() is not None
+
+def success(p):
+    return p.returncode == 0
 
 
 if __name__ == "__main__":
@@ -25,6 +28,8 @@ if __name__ == "__main__":
     OUTPUT_ROOT_DIR = ''
     LOOKUP_FILE = 'lookup.csv'
     #"/srv/data/coci/open/"
+
+    CHECK_TIME = 10
 
     if args.pycmd:
         CMD_PY = args.pycmd
@@ -51,17 +56,27 @@ if __name__ == "__main__":
             list_subprocesses.append(subprocess_val)
             #os.system('%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE))
 
-    processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
-    for p in processes: p.wait()
-    
+    #processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
+    processes = []
+    cmd_dic = {}
+    for cmd in list_subprocesses:
+        new_p = Popen(cmd, shell=True)
+        processes.append(new_p)
+        cmd_dic[str(new_p)] = cmd
 
+    while True:
+        print("Check processes ...")
+        for p in processes:
+            if done(p):
+                if success(p):
+                    processes.remove(p)
+                else:
+                    print("Process %s done with err!"%(p))
+                    processes.remove(p)
 
+                    #create new subprocess and open it again
+                    new_p = Popen(cmd_dic[str(p)],shell=True)
+                    processes.append(new_p)
+                    cmd_dic[str(new_p)] = cmd_dic[str(p)]
 
-
-
-
-
-
-
-
-# In[ ]:
+        sleep(CHECK_TIME)
