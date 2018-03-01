@@ -22,8 +22,8 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lookup", dest="lookup_file_path", required=False, help="The lookup file full path (with file name).")
     args = arg_parser.parse_args()
 
-    CMD_PY = "/anaconda/envs/py35/bin/python3.5"
-    SCRIPT_FULL_PATH = "/srv/dev/coci/script/cociprocess.py"
+    CMD_PY = "python3.5"
+    SCRIPT_FULL_PATH = "cociprocess.py"
     INPUT_ROOT_DIR = '/usr/share/'
     OUTPUT_ROOT_DIR = ''
     LOOKUP_FILE = 'lookup.csv'
