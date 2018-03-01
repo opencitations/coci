@@ -202,9 +202,11 @@ def update_lookup(c):
 
 def update_date(date_val, doi_key):
     global date_dic
-    if doi_key not in date_dic:
+    if (doi_key not in date_dic) or (date_dic[doi_key] == "" and date_val != ""):
         date_dic[doi_key] = date_val
         write_txtblock_on_csv(INDEX_DATE_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(doi_key),date_val))
+
+
 
 def init_date_dic():
     with open(INDEX_DATE_CSVPATH,'r') as csvfile:
@@ -543,7 +545,6 @@ def process_item(obj):
 
                             #citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
                             #cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
-
                             default_date = datetime.datetime(1970, 1, 1, 0, 0)
                             citing_dt = parse(citing_date, default=default_date)
                             cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
@@ -553,6 +554,15 @@ def process_item(obj):
                             timespan = citation.Citation.get_duration(delta,
                                                               citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
                                                               citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
+
+                            #in case the timespan is negative check the timespan with the year value
+                            if timespan[0] == "-" :
+                                cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
+                                year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
+                                                                  citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
+                                                                  citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
+                                if year_timespan[0] != "-":
+                                    timespan = year_timespan
 
                         if timespan != "":
                             if timespan[0] == "-" and nodoi_text != -1:
@@ -585,7 +595,8 @@ def process_ref_entry(obj):
     #save the year in case i don't have a date
     my_year = ""
     if "year" in obj:
-            my_year = obj['year']
+        my_year = obj['year']
+        my_year = re.search(r'\d+', my_year).group()
 
     #check if obj have a DOI if not call crossref
     if "DOI" not in obj :
@@ -618,7 +629,7 @@ def process_ref_entry(obj):
                 #update dates
                 update_date(cited_date, cited_doi)
 
-                return {'value': {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date},'nodoi_text':nodoi_text}
+                return {'value': {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date,'cited_year':my_year},'nodoi_text':nodoi_text}
     else:
         return {'value': -1, 'nodoi_text': nodoi_text}
 
