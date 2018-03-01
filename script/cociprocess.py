@@ -37,7 +37,7 @@ INDEX_FILE_CSVPATH = 'index/'
 
 INPUT_DATA_PATH = 'crossrefdump/'
 
-MAX_DATA_ENTRIES = 5
+MAX_DATA_ENTRIES = 1000
 datacsv_counter = 0
 file_id = 0
 
