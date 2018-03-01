@@ -16,10 +16,10 @@ from dateutil.parser import parse
 import citation
 
 conf = {
-    "email": "ivan.heibi2@unibo.it",
+    "email": "ivan.heibi@opencitations.net",
     "key": None,
     "agent": "COCI Maker",
-    "useragent": "COCI / Maker (via OpenCitations - http://opencitations.net)",
+    "useragent": "COCI / COCI Maker (via OpenCitations - http://opencitations.net; mailto:ivan.heibi@opencitations.net)",
     "postfix": "00000"
 }
 
@@ -46,8 +46,8 @@ REQUEST_TIMEOUT = 60
 REQ_SLEEP_TIME = 10
 MIN_SCORE = 75
 crossref_api = {
-    'free_text' : 'https://api.crossref.org/works?rows=1&query=%s&mailto='+conf["email"],
-    'doi' : 'https://api.crossref.org/works/&mailto='+conf["email"]+'&query=%s'
+    'free_text' : 'https://api.crossref.org/works?rows=1&query=%s',
+    'doi' : 'https://api.crossref.org/works/%s'
 }
 
 lookup_code = 0
