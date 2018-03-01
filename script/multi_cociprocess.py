@@ -24,12 +24,12 @@ if __name__ == "__main__":
 
     CMD_PY = "python3.5"
     SCRIPT_FULL_PATH = "cociprocess.py"
-    INPUT_ROOT_DIR = '/usr/share/'
+    INPUT_ROOT_DIR = ''
     OUTPUT_ROOT_DIR = ''
     LOOKUP_FILE = 'lookup.csv'
     #"/srv/data/coci/open/"
 
-    CHECK_TIME = 10
+    CHECK_TIME = 300
 
     if args.pycmd:
         CMD_PY = args.pycmd
