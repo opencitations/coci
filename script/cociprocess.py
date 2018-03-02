@@ -601,7 +601,8 @@ def process_ref_entry(obj):
             intpart = re.search(r'\d+', my_year)
             if intpart != None:
                     my_year = intpart.group()
-
+            else:
+                my_year = ""
         else:
             my_year = ""
 
