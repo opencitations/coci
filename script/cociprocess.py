@@ -598,7 +598,10 @@ def process_ref_entry(obj):
     if "year" in obj:
         my_year = obj['year']
         if isinstance(my_year, str):
-            my_year = re.search(r'\d+', my_year).group()
+            intpart = re.search(r'\d+', my_year)
+            if intpart != None:
+                    my_year = intpart.group()
+
         else:
             my_year = ""
 
