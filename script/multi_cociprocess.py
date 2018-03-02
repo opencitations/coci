@@ -60,7 +60,7 @@ if __name__ == "__main__":
     processes = []
     cmd_dic = {}
     for cmd in list_subprocesses:
-        new_p = Popen(cmd, shell=True)
+        new_p = Popen(cmd, shell=False)
         processes.append(new_p)
         cmd_dic[str(new_p)] = cmd
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                     processes.remove(p)
 
                     #create new subprocess and open it again
-                    new_p = Popen(cmd_dic[str(p)],shell=True)
+                    new_p = Popen(cmd_dic[str(p)],shell=False)
                     processes.append(new_p)
                     cmd_dic[str(new_p)] = cmd_dic[str(p)]
 
