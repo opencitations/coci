@@ -611,6 +611,7 @@ def process_ref_entry(obj):
     if (obj != -1):
         if "errors" in obj:
             obj['nodoi_text'] = nodoi_text
+            obj['value'] = -1
             return obj
         else:
             #if my new object have a doi now
