@@ -601,7 +601,7 @@ def process_ref_entry(obj):
             my_year = re.search(r'\d+', my_year).group()
         else:
             my_year = ""
-            
+
     #check if obj have a DOI if not call crossref
     if "DOI" not in obj :
         query_text = build_bibc(obj)
@@ -634,8 +634,8 @@ def process_ref_entry(obj):
                 update_date(cited_date, cited_doi)
 
                 return {'value': {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date,'cited_year':my_year},'nodoi_text':nodoi_text}
-    else:
-        return {'value': -1, 'nodoi_text': nodoi_text}
+
+    return {'value': -1, 'nodoi_text': nodoi_text}
 
 def escape_inner_quotes(str_val):
     return str_val.replace('"', '""')
