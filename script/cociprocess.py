@@ -557,12 +557,13 @@ def process_item(obj):
 
                             #in case the timespan is negative check the timespan with the year value
                             if timespan[0] == "-" :
-                                cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
-                                year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
-                                                                  citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
-                                                                  citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
-                                if year_timespan[0] != "-":
-                                    timespan = year_timespan
+                                if ref_entry_attr['cited_year'] != "":
+                                    cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
+                                    year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
+                                                                      citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
+                                                                      citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
+                                    if year_timespan[0] != "-":
+                                        timespan = year_timespan
 
                         if timespan != "":
                             if timespan[0] == "-" and nodoi_text != -1:
