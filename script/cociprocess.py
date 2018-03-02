@@ -597,8 +597,11 @@ def process_ref_entry(obj):
     my_year = ""
     if "year" in obj:
         my_year = obj['year']
-        my_year = re.search(r'\d+', my_year).group()
-
+        if isinstance(my_year, str):
+            my_year = re.search(r'\d+', my_year).group()
+        else:
+            my_year = ""
+            
     #check if obj have a DOI if not call crossref
     if "DOI" not in obj :
         query_text = build_bibc(obj)
