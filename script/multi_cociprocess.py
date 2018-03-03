@@ -19,6 +19,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-script", dest="script_full_path", required=True, help="The script full path(with its name).")
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The root directory of the crossref data dump.")
     arg_parser.add_argument("-out", "--output_dir", dest="output_dir", required=True, help="The root directory where results will be stored.")
+    arg_parser.add_argument("-p", dest="n_proc", required=False, help="The number of subprocess to generate.")
     arg_parser.add_argument("-lookup", dest="lookup_file_path", required=False, help="The lookup file full path (with file name).")
     args = arg_parser.parse_args()
 
@@ -30,6 +31,10 @@ if __name__ == "__main__":
     #"/srv/data/coci/open/"
 
     CHECK_TIME = 300
+    NUM_PROC = 100
+
+    if args.n_proc:
+        NUM_PROC = args.n_proc
 
     if args.pycmd:
         CMD_PY = args.pycmd
@@ -59,10 +64,14 @@ if __name__ == "__main__":
     #processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
     processes = []
     cmd_dic = {}
+    proc_counter = 0
     for cmd in list_subprocesses:
+        if proc_counter >= NUM_PROC:
+            break
         new_p = Popen(cmd, shell=False)
         processes.append(new_p)
         cmd_dic[str(new_p)] = cmd
+        proc_counter = proc_counter + 1
 
     while True:
         print("Check processes ...")
