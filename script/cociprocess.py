@@ -192,6 +192,9 @@ def init_lookup_dic():
 
 #update lookup dictionary and update its corresponding csv
 def update_lookup(c):
+    #get lookup values again first
+    init_lookup_dic()
+
     #define the code following the 9 rule ...
     calc_next_lookup_code()
     code = lookup_code
