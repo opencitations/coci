@@ -552,24 +552,27 @@ def process_item(obj):
                             #citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
                             #cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
                             default_date = datetime.datetime(1970, 1, 1, 0, 0)
-                            citing_dt = parse(citing_date, default=default_date)
-                            cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
+                            try:
+                                citing_dt = parse(citing_date, default=default_date)
+                                cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
 
-                            #timespan = to_iso8601(citing_dt - cited_dt)
-                            delta = relativedelta(citing_dt, cited_dt)
-                            timespan = citation.Citation.get_duration(delta,
-                                                              citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
-                                                              citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
+                                #timespan = to_iso8601(citing_dt - cited_dt)
+                                delta = relativedelta(citing_dt, cited_dt)
+                                timespan = citation.Citation.get_duration(delta,
+                                                                  citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
+                                                                  citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
 
-                            #in case the timespan is negative check the timespan with the year value
-                            if timespan[0] == "-" :
-                                if ref_entry_attr['cited_year'] != "":
-                                    cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
-                                    year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
-                                                                      citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
-                                                                      citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
-                                    if year_timespan[0] != "-":
-                                        timespan = year_timespan
+                                #in case the timespan is negative check the timespan with the year value
+                                if timespan[0] == "-" :
+                                    if ref_entry_attr['cited_year'] != "":
+                                        cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
+                                        year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
+                                                                          citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
+                                                                          citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
+                                        if year_timespan[0] != "-":
+                                            timespan = year_timespan
+                            except:
+                                pass
 
                         if timespan != "":
                             if timespan[0] == "-" and nodoi_text != -1:
