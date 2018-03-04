@@ -68,7 +68,7 @@ if __name__ == "__main__":
     for cmd in list_subprocesses:
         if proc_counter >= NUM_PROC:
             break
-        new_p = Popen(cmd, shell=False)
+        new_p = Popen(cmd, shell=True)
         processes.append(new_p)
         cmd_dic[str(new_p)] = cmd
         proc_counter = proc_counter + 1
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                     processes.remove(p)
 
                     #create new subprocess and open it again
-                    new_p = Popen(cmd_dic[str(p)],shell=False)
+                    new_p = Popen(cmd_dic[str(p)],shell=True)
                     processes.append(new_p)
                     cmd_dic[str(new_p)] = cmd_dic[str(p)]
 
