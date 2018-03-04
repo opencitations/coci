@@ -184,22 +184,25 @@ def init_output_paths(out_o):
 def init_lookup_dic():
     with open(LOOKUP_CSV,'r') as lookupcsv:
         lookupcsv_reader = csv.DictReader(lookupcsv)
+        code = -1
         for row in lookupcsv_reader:
             lookup_dic[row['c']] = row['code']
+            code = int(row['code'])
         #last code used
         global lookup_code
-        lookup_code = len(lookup_dic) - 1
+        lookup_code = code
+        #lookup_code = len(lookup_dic) - 1
 
 #update lookup dictionary and update its corresponding csv
 def update_lookup(c):
     #get lookup values again first
     init_lookup_dic()
 
-    #define the code following the 9 rule ...
-    calc_next_lookup_code()
-    code = lookup_code
     global lookup_dic
     if c not in lookup_dic:
+        #define the code following the 9 rule ...
+        calc_next_lookup_code()
+        code = lookup_code
         lookup_dic[c] = code
         write_txtblock_on_csv(LOOKUP_CSV, '\n"%s","%s"'%(c,code))
 
@@ -420,7 +423,7 @@ def build_pubdate(obj, doi_val):
                         pass
 
                 #I have a date , so generate it
-                if (listdate[0] != 1):
+                if (listdate[0] > 1) and (listdate[0] < 10000) and (listdate[1] > 0) and (listdate[1] <= 12) and (lisdate[2] > 0) and (lisdate[2] <= 12):
                     date_val = datetime.date(listdate[0], listdate[1], listdate[2])
 
                     dformat = '%Y'
@@ -436,7 +439,7 @@ def build_pubdate(obj, doi_val):
                     #dateobj = {"str_val": date_in_str, "format":  dformat}
                     return date_in_str
 
-            except IndexError:
+            except:
                 pass
 
     #date_dic[ci] = {"str_val":"","format":-1}
@@ -603,6 +606,7 @@ def process_ref_entry(obj):
         if isinstance(my_year, str):
             intpart = re.search(r'\d+', my_year)
             if intpart != None:
+                if int(intpart.group()) > 0:
                     my_year = intpart.group()
             else:
                 my_year = ""
