@@ -34,7 +34,7 @@ if __name__ == "__main__":
     NUM_PROC = 100
 
     if args.n_proc:
-        NUM_PROC = args.n_proc
+        NUM_PROC = int(args.n_proc)
 
     if args.pycmd:
         CMD_PY = args.pycmd
