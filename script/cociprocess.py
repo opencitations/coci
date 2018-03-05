@@ -513,7 +513,7 @@ def process_item(obj):
     prov_lis = []
 
     if (("DOI" in obj) and ("reference" in obj)):
-        print("Processing:"+obj["DOI"])
+        #print("Processing:"+obj["DOI"])
         citing_doi = obj["DOI"].lower()
         citing_ci = convert_doi_to_ci(citing_doi)
         citing_date = build_pubdate(obj,citing_doi)

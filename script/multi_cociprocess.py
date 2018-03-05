@@ -2,6 +2,7 @@
 
 import os
 from time import sleep
+import subprocess
 from subprocess import Popen
 from argparse import ArgumentParser
 from shutil import copyfile
@@ -71,6 +72,7 @@ if __name__ == "__main__":
     for cmd in list_subprocesses:
         #if proc_counter >= NUM_PROC:
         #    break
+        #new_p = Popen(cmd, shell=True, stdout=subprocess.PIPE)
         new_p = Popen(cmd, shell=True)
         processes.append(new_p)
         cmd_dic[str(new_p)] = cmd
