@@ -716,7 +716,7 @@ if __name__ == "__main__":
     for subdir, dirs, files in os.walk(INPUT_DATA_PATH):
         for file in files:
             if file.lower().endswith('.json'):
-                print(file)
+                #print(file)
                 data = json.load(open(os.path.join(subdir, file)))
                 matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
                 cur_id = int(matchObj.group(1))
