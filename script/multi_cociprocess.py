@@ -3,6 +3,7 @@
 import os
 from time import sleep
 import subprocess
+import multiprocessing
 from subprocess import Popen
 from argparse import ArgumentParser
 from shutil import copyfile
@@ -13,6 +14,8 @@ def done(p):
 def success(p):
     return p.returncode == 0
 
+def worker(cmd):
+    return Popen(cmd, shell=True)
 
 if __name__ == "__main__":
     arg_parser = ArgumentParser("multi_cociprocess.py", description="Assign a process to handle each collection of crossref JSON files saved in a subdirectory.")
@@ -65,32 +68,35 @@ if __name__ == "__main__":
             list_subprocesses.append(subprocess_val)
             #os.system('%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE))
 
+    multi_pool = multiprocessing.Pool( processes = 300 )
+    multi_results =[multi_pool.apply_async(worker, [cmd]) for cmd in list_subprocesses]
+
     #processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
-    processes = []
-    cmd_dic = {}
-    proc_counter = 0
-    for cmd in list_subprocesses:
+    #processes = []
+    #cmd_dic = {}
+    #proc_counter = 0
+    #for cmd in list_subprocesses:
         #if proc_counter >= NUM_PROC:
         #    break
         #new_p = Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        new_p = Popen(cmd, shell=True)
-        processes.append(new_p)
-        cmd_dic[str(new_p)] = cmd
-        proc_counter = proc_counter + 1
+    #    new_p = Popen(cmd, shell=True)
+    #    processes.append(new_p)
+    #    cmd_dic[str(new_p)] = cmd
+    #    proc_counter = proc_counter + 1
 
-    while True:
-        print("Check processes ...")
-        for p in processes:
-            if done(p):
-                if success(p):
-                    processes.remove(p)
-                else:
-                    print("Process %s done with err!"%(p))
-                    processes.remove(p)
+    #while True:
+    #    print("Check processes ...")
+    #    for p in processes:
+    #        if done(p):
+    #            if success(p):
+    #                processes.remove(p)
+    #            else:
+    #                print("Process %s done with err!"%(p))
+    #                processes.remove(p)
 
                     #create new subprocess and open it again
-                    new_p = Popen(cmd_dic[str(p)],shell=True)
-                    processes.append(new_p)
-                    cmd_dic[str(new_p)] = cmd_dic[str(p)]
+    #                new_p = Popen(cmd_dic[str(p)],shell=True)
+    #                processes.append(new_p)
+    #                cmd_dic[str(new_p)] = cmd_dic[str(p)]
 
-        sleep(CHECK_TIME)
+    #    sleep(CHECK_TIME)
