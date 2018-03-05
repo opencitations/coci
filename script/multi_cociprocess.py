@@ -68,36 +68,37 @@ if __name__ == "__main__":
             list_subprocesses.append(subprocess_val)
             #os.system('%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE))
 
-    multi_pool = multiprocessing.Pool( processes = 300 )
-    multi_results =[multi_pool.apply_async(worker, [cmd]) for cmd in list_subprocesses]
+    #multi_pool = multiprocessing.Pool( processes = 300 )
+    #multi_results =[multi_pool.apply_async(worker, [cmd]) for cmd in list_subprocesses]
 
 
-    #processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
-    #processes = []
-    #cmd_dic = {}
-    #proc_counter = 0
-    #for cmd in list_subprocesses:
+    processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
+    processes = []
+    cmd_dic = {}
+    proc_counter = 0
+    for cmd in list_subprocesses:
         #if proc_counter >= NUM_PROC:
         #    break
-        #new_p = Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    #    new_p = Popen(cmd, shell=True)
-    #    processes.append(new_p)
-    #    cmd_dic[str(new_p)] = cmd
-    #    proc_counter = proc_counter + 1
+        new_p = Popen(cmd, shell=True, stdout=subprocess.PIPE, close_fds=True)
+        #new_p = Popen(cmd, shell=True)
+        std_out, std_err = new_p.communicate()
+        processes.append(new_p)
+        cmd_dic[str(new_p)] = cmd
+        proc_counter = proc_counter + 1
 
-    #while True:
-    #    print("Check processes ...")
-    #    for p in processes:
-    #        if done(p):
-    #            if success(p):
-    #                processes.remove(p)
-    #            else:
-    #                print("Process %s done with err!"%(p))
-    #                processes.remove(p)
+    while True:
+        print("Check processes ...")
+        for p in processes:
+            if done(p):
+                if success(p):
+                    processes.remove(p)
+                else:
+                    print("Process %s done with err!"%(p))
+                    processes.remove(p)
 
                     #create new subprocess and open it again
-    #                new_p = Popen(cmd_dic[str(p)],shell=True)
-    #                processes.append(new_p)
-    #                cmd_dic[str(new_p)] = cmd_dic[str(p)]
+                    new_p = Popen(cmd_dic[str(p)],shell=True)
+                    processes.append(new_p)
+                    cmd_dic[str(new_p)] = cmd_dic[str(p)]
 
-    #    sleep(CHECK_TIME)
+        sleep(CHECK_TIME)
