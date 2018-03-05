@@ -15,7 +15,7 @@ def success(p):
     return p.returncode == 0
 
 def worker(cmd):
-    return Popen(cmd, shell=True)
+    subprocess.call(cmd, shell=True)
 
 if __name__ == "__main__":
     arg_parser = ArgumentParser("multi_cociprocess.py", description="Assign a process to handle each collection of crossref JSON files saved in a subdirectory.")
@@ -70,6 +70,7 @@ if __name__ == "__main__":
 
     multi_pool = multiprocessing.Pool( processes = 300 )
     multi_results =[multi_pool.apply_async(worker, [cmd]) for cmd in list_subprocesses]
+
 
     #processes = [Popen(cmd, shell=True) for cmd in list_subprocesses]
     #processes = []
