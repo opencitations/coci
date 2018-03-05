@@ -4,6 +4,7 @@ import os
 from time import sleep
 from subprocess import Popen
 from argparse import ArgumentParser
+from shutil import copyfile
 
 def done(p):
     return p.poll() is not None
@@ -56,8 +57,10 @@ if __name__ == "__main__":
         for subdirname in dirnames:
             input_full_path = os.path.join(dirname, subdirname)
             output_full_path = '%s%s'%(OUTPUT_ROOT_DIR, subdirname)
+            cociprocess_file = SCRIPT_FULL_PATH.replace("cociprocess", "cociprocess-%s"%(len(list_subprocesses)))
+            copyfile(SCRIPT_FULL_PATH,cociprocess_file)
 
-            subprocess_val = '%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE)
+            subprocess_val = '%s %s -in %s -out %s -lookup %s'%(CMD_PY, cociprocess_file, input_full_path, output_full_path,LOOKUP_FILE)
             list_subprocesses.append(subprocess_val)
             #os.system('%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE))
 
