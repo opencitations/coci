@@ -66,8 +66,8 @@ if __name__ == "__main__":
     cmd_dic = {}
     proc_counter = 0
     for cmd in list_subprocesses:
-        if proc_counter >= NUM_PROC:
-            break
+        #if proc_counter >= NUM_PROC:
+        #    break
         new_p = Popen(cmd, shell=True)
         processes.append(new_p)
         cmd_dic[str(new_p)] = cmd
