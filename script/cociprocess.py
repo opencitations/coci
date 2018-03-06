@@ -423,7 +423,7 @@ def build_pubdate(obj, doi_val):
                         pass
 
                 #I have a date , so generate it
-                if (listdate[0] > 1) and (listdate[0] < 10000) and (listdate[1] > 0) and (listdate[1] <= 12) and (lisdate[2] > 0) and (lisdate[2] <= 12):
+                if (listdate[0] > 1) and (listdate[0] < 10000) and (listdate[1] > 0) and (listdate[1] <= 12) and (listdate[2] > 0) and (listdate[2] <= 31):
                     date_val = datetime.date(listdate[0], listdate[1], listdate[2])
 
                     dformat = '%Y'
