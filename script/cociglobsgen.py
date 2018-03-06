@@ -1,18 +1,13 @@
 import os
 from argparse import ArgumentParser
 import json
-import requests
-from requests.exceptions import ReadTimeout, ConnectTimeout
 import sys
 import urllib.parse
 import csv
 import re
 import errno
 import datetime
-from time import sleep
-from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse
-import citation
 
 class CociprocessGlob:
 
