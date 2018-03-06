@@ -245,11 +245,11 @@ def init_file_dic():
         for row in csv_reader:
             file_dic[row['id']] = 1
 
-def update_file_index(file_id):
-    #global processed_dic
-    if file_id not in file_dic:
-        file_dic[file_id] = 1
-        write_txtblock_on_csv(INDEX_FILE_CSVPATH, "\n"+file_id)
+def update_file_index(fileid):
+    global file_dic
+    if fileid not in file_dic:
+        file_dic[fileid] = 1
+        write_txtblock_on_csv(INDEX_FILE_CSVPATH, "\n"+fileid)
 
 #populate all the dictionaries data
 def reload():
