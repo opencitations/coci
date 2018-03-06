@@ -182,17 +182,13 @@ if __name__ == "__main__":
         cpg.LOOKUP_CSV = args.lookup_file_path
 
     if args.output_dir:
-        cpg.INDEX_DATE_CSVPATH = '%s/index/'%args.output_dir
+        cpg.INDEX_DATE_CSVPATH = '%sindex/'%args.output_dir
 
-    full_input_path = "%s/"%args.input_dir
+    full_input_path = "%s"%args.input_dir
 
 
     cpg.init_dirs_skeleton()
-    cpg.lookup_code = 0
-    cpg.lookup_dic = {}
-    cpg.date_dic = {}
     cpg.init_lookup_dic()
-
 
     for subdir, dirs, files in os.walk(full_input_path):
         for file in files:
