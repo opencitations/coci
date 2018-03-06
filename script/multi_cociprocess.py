@@ -66,9 +66,8 @@ if __name__ == "__main__":
 
             subprocess_val = '%s %s -in %s -out %s -lookup %s'%(CMD_PY, cociprocess_file, input_full_path, output_full_path,LOOKUP_FILE)
             list_subprocesses.append(subprocess_val)
-            #os.system('%s %s -in %s -out %s -lookup %s'%(CMD_PY, SCRIPT_FULL_PATH, input_full_path, output_full_path,LOOKUP_FILE))
 
-    #multi_pool = multiprocessing.Pool( processes = 300 )
+    #multi_pool = multiprocessing.Pool()
     #multi_results =[multi_pool.apply_async(worker, [cmd]) for cmd in list_subprocesses]
 
 
