@@ -582,9 +582,6 @@ if __name__ == "__main__":
         for number in range(starting_number * args.dir_step, (ending_number+1) * args.dir_step, args.dir_step):
             cp.INPUT_DATA_PATH += ["%s/%s/"%(args.input_dir, str(number))]
 
-    print(cp.INPUT_DATA_PATH)
-    exit(0)
-
     if args.output_dir:
         cp.init_output_paths(args.output_dir)
 
