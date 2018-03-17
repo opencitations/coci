@@ -587,7 +587,7 @@ if __name__ == "__main__":
             cp.INPUT_DATA_PATH += ["%s/%s/"%(args.input_dir, str(number))]
 
     if args.output_dir:
-        cp.init_output_paths(args.output_dir)
+        cp.init_output_paths(args.output_dir + os.sep + str(args.process_number))
 
 
     cp.reload()
