@@ -589,7 +589,7 @@ if __name__ == "__main__":
     cp.reload()
 
     print("Processing started "+str(datetime.datetime.now().replace(microsecond=0)))
-    print("The input data: "+cp.INPUT_DATA_PATH)
+    print("The input data: "+ str(cp.INPUT_DATA_PATH))
     #iterate all the input data and process the json files
     for cur_dir in cp.INPUT_DATA_PATH:
         if os.path.exists(cur_dir):
