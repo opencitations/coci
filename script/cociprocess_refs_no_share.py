@@ -156,6 +156,10 @@ class Cocirefprocess:
             csv_reader = csv.DictReader(csvfile)
             for row in csv_reader:
                 self.date_dic[row['id']] = row['value']
+        with open(self.INDEX_DATE_GLOBAL_CSVPATH,'r') as csvfile:
+            csv_reader = csv.DictReader(csvfile)
+            for row in csv_reader:
+                self.date_dic[row['id']] = row['value']
 
     def update_processed(self,doi_key):
         if doi_key not in self.processed_dic:
