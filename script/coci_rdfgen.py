@@ -25,7 +25,7 @@ if __name__ == "__main__":
         prov_dic = {}
         for files in os.walk(prov_dir):
             for file in files:
-                if file.lower().endswith('.json'):
+                if file.lower().endswith('.csv'):
                     p_file_path = os.path.join(prov_dir, file)
                     #open csv and update prov dictionary
                     with open(p_file_path,'r') as csvfile:
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         #iterate all data entries
         for files in os.walk(data_dir):
             for file in files:
-                if file.lower().endswith('.json'):
+                if file.lower().endswith('.csv'):
                     d_file_path = os.path.join(data_dir, file)
                     #open the csv file and process each data entry
                     with open(d_file_path,'r') as csvfile:
