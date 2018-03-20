@@ -6,6 +6,7 @@ import citation
 if __name__ == "__main__":
     arg_parser = ArgumentParser("coci_rdfgen.py", description="Create the RDF dataset for COCI")
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The root directory of the COCI processed data")
+    args = arg_parser.parse_args()
 
     INPUT_ROOT_DIR = "."
 
