@@ -79,7 +79,7 @@ if __name__ == "__main__":
                                                 creation_date= row['creation'], duration= row['timespan'], oci= row['oci'])
 
                             g = citation.get_citation_rdf(base_url, include_oci=False, include_id_link=False, include_rdfs_lbl=False)
-                            block_txt = block_txt + str(g.serialize(format='nt'))
+                            block_txt = block_txt + g.serialize(format='nt').decode("utf-8")
 
                     if block_txt != "":
                         with open(OUTPUT_FILE, 'a', newline='') as f:
