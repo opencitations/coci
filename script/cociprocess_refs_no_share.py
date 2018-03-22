@@ -491,7 +491,7 @@ class Cocirefprocess:
                     "data": data_txtblock,
                     "prov": prov_txtblock
                 }
-            return - 1
+            return -1
         return {"citing_doi": "none", "errors": "entry without a DOI or Ref-List"}
 
     #given a reference entry returns it's DOI, CI, and Publication-Date
