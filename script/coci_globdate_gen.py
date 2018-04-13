@@ -2,7 +2,6 @@
 import os
 from argparse import ArgumentParser
 from citation import Citation
-from rdflib.namespace import RDF, RDFS, SKOS
 import csv
 from datetime import datetime
 
@@ -111,7 +110,7 @@ if __name__ == "__main__":
 
     print("The Root directory is %s"%(INPUT_ROOT_DIR))
     for d in all_dirs:
-        print("Processing %s"%(d))
+        print("Processing %s  ..."%(d))
         if d not in processed_dic:
             date_file_path = '%s/index/date.csv'%(d)
 
@@ -124,8 +123,6 @@ if __name__ == "__main__":
                         if date_val in glob_date_dic[doi_key]:
                             glob_date_dic[doi_key][date_val] = glob_date_dic[doi_key][date_val] + 1
                         else:
-                            print(glob_date_dic[doi_key])
-                            print(date_val)
                             glob_date_dic[doi_key] = update_dates(date_val, glob_date_dic[doi_key])
                     else:
                         glob_date_dic[doi_key] = {}
@@ -134,9 +131,6 @@ if __name__ == "__main__":
         processed_dic[d] = 1
         with open(PROCESSED_INDEX, 'a', newline='') as f:
             f.write(d)
-    print("Done")
-    #print(glob_date_dic)
-
 
     #get best date from the dates list of each doi
     block_txt = ""
