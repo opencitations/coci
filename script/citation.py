@@ -48,31 +48,35 @@ class Citation(object):
     def __init__(self,
                  citing_entity_local_id, citing_url, citing_pub_date,
                  cited_entity_local_id, cited_url, cited_pub_date,
-                 prov_agent_url, source, prov_date):
-        self.oci = citing_entity_local_id + "-" + cited_entity_local_id
+                 prov_agent_url, source, prov_date, creation_date = None, duration= None, oci= None):
+
+        self.oci = oci
+        if self.oci == None:
+            self.oci = citing_entity_local_id + "-" + cited_entity_local_id
         self.citing_url = citing_url
         self.cited_url = cited_url
 
-        self.creation_date = None
-        self.duration = None
-        if self.contains_years(citing_pub_date):
-            default_date = datetime(1970, 1, 1, 0, 0)
-            self.creation_date = citing_pub_date[:10]
-            citing_pub_datetime = parse(self.creation_date, default=default_date)
+        self.creation_date = creation_date
+        self.duration = duration
+        if self.creation_date == None and self.duration == None :
+            if self.contains_years(citing_pub_date):
+                default_date = datetime(1970, 1, 1, 0, 0)
+                self.creation_date = citing_pub_date[:10]
+                citing_pub_datetime = parse(self.creation_date, default=default_date)
 
-            if self.contains_years(cited_pub_date):
-                cited_pub_datetime = parse(cited_pub_date[:10], default=default_date)
-                delta = relativedelta(citing_pub_datetime, cited_pub_datetime)
-                self.duration = self.get_duration(
-                    delta,
-                    self.contains_months(citing_pub_date) and self.contains_months(cited_pub_date),
-                    self.contains_days(citing_pub_date) and self.contains_days(cited_pub_date))
+                if self.contains_years(cited_pub_date):
+                    cited_pub_datetime = parse(cited_pub_date[:10], default=default_date)
+                    delta = relativedelta(citing_pub_datetime, cited_pub_datetime)
+                    self.duration = self.get_duration(
+                        delta,
+                        self.contains_months(citing_pub_date) and self.contains_months(cited_pub_date),
+                        self.contains_days(citing_pub_date) and self.contains_days(cited_pub_date))
 
         self.prov_agent_url = prov_agent_url
         self.source = source
         self.prov_date = prov_date
 
-    def get_citation_rdf(self, baseurl, include_oci=True):
+    def get_citation_rdf(self, baseurl, include_oci=True, include_id_link=True, include_rdfs_lbl=True, include_data=True, include_prov=True):
         citation_graph = Graph()
 
         citing_br = URIRef(self.citing_url)
@@ -81,33 +85,37 @@ class Citation(object):
         citation_corpus_id = "ci/" + self.oci
         citation = URIRef(baseurl + citation_corpus_id)
         occ_citation_id = URIRef(baseurl + "id/ci-" + self.oci)
-        citation_graph.add((citation, RDFS.label,
-                            Literal("citation %s [%s]" % (self.oci, citation_corpus_id))))
-        citation_graph.add((citation, RDF.type, self.__citation))
-        citation_graph.add((citation, self.__has_citing_entity, citing_br))
-        citation_graph.add((citation, self.__has_cited_entity, cited_br))
-        citation_graph.add((citation, self.__has_identifier, occ_citation_id))
 
-        if self.creation_date is not None:
-            if Citation.contains_days(self.creation_date):
-                xsd_type = XSD.date
-            elif Citation.contains_months(self.creation_date):
-                xsd_type = XSD.gYearMonth
-            else:
-                xsd_type = XSD.gYear
+        if include_data:
+            citation_graph.add((citation, RDF.type, self.__citation))
+            citation_graph.add((citation, self.__has_citing_entity, citing_br))
+            citation_graph.add((citation, self.__has_cited_entity, cited_br))
+            if include_rdfs_lbl:
+                citation_graph.add((citation, RDFS.label,Literal("citation %s [%s]" % (self.oci, citation_corpus_id))))
+            if include_id_link:
+                citation_graph.add((citation, self.__has_identifier, occ_citation_id))
 
-            citation_graph.add((citation, self.__has_citation_creation_date,
-                                Literal(self.creation_date, datatype=xsd_type, normalize=False)))
-            if self.duration is not None:
-                citation_graph.add((citation, self.__has_citation_time_span,
-                                    Literal(self.duration, datatype=XSD.duration)))
+            if self.creation_date is not None:
+                if Citation.contains_days(self.creation_date):
+                    xsd_type = XSD.date
+                elif Citation.contains_months(self.creation_date):
+                    xsd_type = XSD.gYearMonth
+                else:
+                    xsd_type = XSD.gYear
+
+                citation_graph.add((citation, self.__has_citation_creation_date,
+                                    Literal(self.creation_date, datatype=xsd_type, normalize=False)))
+                if self.duration is not None:
+                    citation_graph.add((citation, self.__has_citation_time_span,
+                                        Literal(self.duration, datatype=XSD.duration)))
 
         if include_oci:
             citation_graph += self.get_oci_rdf(baseurl)
 
-        citation_graph.add((citation, self.__was_attributed_to, URIRef(self.prov_agent_url)))
-        citation_graph.add((citation, self.__had_primary_source, URIRef(self.source)))
-        citation_graph.add((citation, self.__generated_at_time, Literal(self.prov_date, datatype=XSD.dateTime)))
+        if include_prov:
+            citation_graph.add((citation, self.__was_attributed_to, URIRef(self.prov_agent_url)))
+            citation_graph.add((citation, self.__had_primary_source, URIRef(self.source)))
+            citation_graph.add((citation, self.__generated_at_time, Literal(self.prov_date, datatype=XSD.dateTime)))
 
         return citation_graph
 
