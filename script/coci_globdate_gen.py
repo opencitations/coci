@@ -9,9 +9,11 @@ from datetime import datetime
 def update_dates(date_val, all_dates):
     #check length string
     len_date_val = len(date_val)
+    len_alldates = -1
     for date_key in all_dates:
         len_alldates = len(date_key)
         break
+
     # I have a better date already
     if len_date_val < len_alldates:
         return all_dates
@@ -105,6 +107,12 @@ if __name__ == "__main__":
                     glob_date_dic[doi_key] = {}
                     glob_date_dic[doi_key][date_val] = 1
 
+    #p = 0
+    #for value in glob_date_dic:
+    #    print(value)
+    #    if p == 10:
+    #        break
+    #    p++
 
     all_dirs = [ os.path.join(INPUT_ROOT_DIR, name) for name in os.listdir(INPUT_ROOT_DIR) if os.path.isdir(os.path.join(INPUT_ROOT_DIR, name)) ]
 
@@ -134,6 +142,7 @@ if __name__ == "__main__":
 
     #get best date from the dates list of each doi
     block_txt = ""
+    block_iter_print = 10
     for doikey in glob_date_dic:
         bestdate = []
         maxscore = 0
@@ -145,15 +154,28 @@ if __name__ == "__main__":
                 bestdate.append(datekey)
         # choose only 1 date from the list
         # the most recent date
-        choosen_date = "1000-01-01"
+        choosen_date = None
         for d in bestdate:
-            d_datetime = datetime.strptime(d, getdateformat(d))
-            choosen_date_datetime = datetime.strptime(choosen_date, getdateformat(choosen_date))
-            if d_datetime > choosen_date_datetime:
+            if choosen_date == None:
                 choosen_date = d
+            else:
+                try:
+                    d_datetime = datetime.strptime(d, getdateformat(d))
+                    choosen_date_datetime = datetime.strptime(choosen_date, getdateformat(choosen_date))
+                    if d_datetime > choosen_date_datetime:
+                        choosen_date = d
+                except Exception as e:
+                    print("Error "+ str(e) + " in:")
+                    print(doikey)
+                    print(d)
+                    continue
         #update dictionary with the choosen date
         #glob_date_dic[doikey] = choosen_date
         block_txt = block_txt + '\n"%s",%s'%(doikey.replace('"', '""'),choosen_date)
 
-    with open(OUTPUT_FILE, 'a', newline='') as f:
-        f.write(block_txt)
+        block_iter_print = block_iter_print - 1
+        if block_iter_print == 0:
+            with open(OUTPUT_FILE, 'a', newline='') as f:
+                f.write(block_txt)
+            block_iter_print = 10
+            block_txt = ""
