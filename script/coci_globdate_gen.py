@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
         processed_dic[d] = 1
         with open(PROCESSED_INDEX, 'a', newline='') as f:
-            f.write(d)
+            f.write('\n%s'%(d))
 
     #get best date from the dates list of each doi
     block_txt = ""
