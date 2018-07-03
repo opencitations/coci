@@ -148,3 +148,6 @@ if __name__ == "__main__":
 
                 with open(OUTPUT_FILE, 'a', newline='') as f:
                     f.write(block_txt)
+
+        with open(PROCESSED_INDEX, 'a', newline='') as f:
+            f.write('\n%s,%s'%(data_file_path,prov_file_path))
