@@ -37,17 +37,6 @@ if __name__ == "__main__":
         OUTPUT_FILE = args.output_file+"/data.csv"
         OUTPUT_FILE_PROV = args.output_file+"/prov.csv"
 
-    #create DATA output file
-    if not os.path.exists(os.path.dirname(OUTPUT_FILE)):
-        try:
-            os.makedirs(os.path.dirname(OUTPUT_FILE))
-            pass
-        except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise
-    with open(OUTPUT_FILE, 'w') as f:
-        f.write('oci,citing,cited,creation,timespan')
-
     #create PROV output file
     if not os.path.exists(os.path.dirname(OUTPUT_FILE)):
         try:
@@ -77,24 +66,12 @@ if __name__ == "__main__":
             for row in csv_reader:
                 processed_dic[row['id']] = 1
 
-
-    #init the global dictionary
-    glob_date_dic = {}
-    with open(DATE_GLOB,'r') as csvfile:
-        csv_reader = csv.DictReader(csvfile)
-        for row in csv_reader:
-            doi_key = row['id']
-            date_val = row['value']
-            glob_date_dic[doi_key] = date_val
-
-
-
     #scan all data files
     all_dirs = [ os.path.join(INPUT_ROOT_DIR, name) for name in os.listdir(INPUT_ROOT_DIR) if os.path.isdir(os.path.join(INPUT_ROOT_DIR, name)) ]
     print("The Root directory is %s"%(INPUT_ROOT_DIR))
     for d in all_dirs:
         print("Processing %s  ..."%(d))
-        data_file_path = '%s/data'%(d)
+        #data_file_path = '%s/data'%(d)
         prov_file_path = '%s/prov'%(d)
 
         for dfile in os.listdir(prov_file_path):
@@ -111,43 +88,5 @@ if __name__ == "__main__":
                 with open(OUTPUT_FILE_PROV, 'a', newline='') as f:
                     f.write(block_txt)
 
-
-        for dfile in os.listdir(data_file_path):
-            dfile_path = '%s/%s'%(data_file_path,dfile)
-            if dfile_path not in processed_dic:
-                #process it
-                block_txt = ""
-                with open(dfile_path,'r') as csvfile:
-                    csv_reader = csv.DictReader(csvfile)
-                    for row in csv_reader:
-                        #oci,citing,cited,creation,timespan
-                        oci = row['oci']
-                        citing = row['citing']
-                        cited = row['cited']
-                        new_creation = row['creation']
-                        timespan = row['timespan']
-                        try:
-                            new_creation = glob_date_dic[citing]
-                            new_cited_time = glob_date_dic[cited]
-
-                            default_date = datetime.datetime(1970, 1, 1, 0, 0)
-                            try:
-                                citing_dt = parse(new_creation, default=default_date)
-                                cited_dt = parse(new_cited_time, default=default_date)
-                                delta = relativedelta(citing_dt, cited_dt)
-                                timespan = citation.Citation.get_duration(delta,
-                                                                  citation.Citation.contains_months(new_creation) and citation.Citation.contains_months(new_cited_time),
-                                                                  citation.Citation.contains_days(new_creation) and citation.Citation.contains_days(new_cited_time))
-
-                                block_txt = block_txt +'\n%s,"%s","%s",%s,%s'%(oci,escape_inner_quotes(citing),escape_inner_quotes(cited),new_creation,timespan)
-
-                            except:
-                                pass
-                        except:
-                            block_txt = block_txt +'\n%s,"%s","%s",%s,%s'%(oci,escape_inner_quotes(citing),escape_inner_quotes(cited),new_creation,timespan)
-
-                with open(OUTPUT_FILE, 'a', newline='') as f:
-                    f.write(block_txt)
-
         with open(PROCESSED_INDEX, 'a', newline='') as f:
-            f.write('\n%s,%s'%(data_file_path,prov_file_path))
+            f.write('\n%s'%(prov_file_path))
