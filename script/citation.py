@@ -79,14 +79,14 @@ class Citation(object):
     def get_citation_rdf(self, baseurl, include_oci=True, include_id_link=True, include_rdfs_lbl=True, include_data=True, include_prov=True):
         citation_graph = Graph()
 
-        citing_br = URIRef(self.citing_url)
-        cited_br = URIRef(self.cited_url)
-
         citation_corpus_id = "ci/" + self.oci
         citation = URIRef(baseurl + citation_corpus_id)
         occ_citation_id = URIRef(baseurl + "id/ci-" + self.oci)
 
         if include_data:
+            citing_br = URIRef(self.citing_url)
+            cited_br = URIRef(self.cited_url)
+            
             citation_graph.add((citation, RDF.type, self.__citation))
             citation_graph.add((citation, self.__has_citing_entity, citing_br))
             citation_graph.add((citation, self.__has_cited_entity, cited_br))
