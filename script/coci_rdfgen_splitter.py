@@ -127,7 +127,7 @@ if __name__ == "__main__":
                         s = ""
                         next(fprov)
                         for line in fprov:
-                            if count < 10000:
+                            if count < 100000:
                                 count += 1
                                 s += line
                             else:
@@ -148,7 +148,7 @@ if __name__ == "__main__":
                         s = ""
                         next(fdata)
                         for line in fdata:
-                            if count < 10000:
+                            if count < 100000:
                                 count += 1
                                 s += line
                             else:
