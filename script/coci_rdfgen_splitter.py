@@ -17,10 +17,10 @@ def populate_data(s):
     for row in reader:
         #s as a csv: oci,citing,cited,creation,timespan
         oci = row[0]
-        citing = row[0]
-        cited = row[0]
-        creation = row[0]
-        timespan = row[0]
+        citing = row[1]
+        cited = row[2]
+        creation = row[3]
+        timespan = row[4]
 
         citation = Citation( None, doi_prefix +  urllib.parse.quote(citing), None,
                             None, doi_prefix +  urllib.parse.quote(cited), None,
