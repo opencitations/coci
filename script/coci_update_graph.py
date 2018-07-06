@@ -1,9 +1,18 @@
 import os
 import errno
-from os.path import abspath
+from os.path import abspath, isdir, sep
+from os import walk
 from argparse import ArgumentParser
 
 from SPARQLWrapper import SPARQLWrapper
+
+def add(server, g_url, f_n):
+    print("Add file", f_n)
+    server = SPARQLWrapper(server)
+    server.method = 'POST'
+    server.setQuery('LOAD <file:' + abspath(f_n) + '> INTO GRAPH <' + g_url + '>')
+    server.query()
+    print("Done")
 
 if __name__ == "__main__":
     arg_parser = ArgumentParser("coci_update_graph.py", description="Update COCI graph with a given input file of new triples.")
@@ -20,16 +29,22 @@ if __name__ == "__main__":
     if args.server_url:
         SERVER_URL = args.server_url
 
-    if args.input_file:
+    INPUT_DIR = None
+    INPUT_FILE = None
+
+    if isdir(args.input_file):
+        INPUT_DIR = args.input_file
+    else:
         INPUT_FILE = args.input_file
 
     if args.graph_name:
         GRAPH_URL = args.graph_name
 
-    ## The sparql server
-    server = SPARQLWrapper(SERVER_URL)
-    server.method = 'POST'
-    server.setQuery('LOAD <file:'+abspath(INPUT_FILE)+'> INTO GRAPH <'+GRAPH_URL+'>')
-    server.query()
+    if INPUT_DIR is None:
+        add(SERVER_URL, GRAPH_URL, INPUT_FILE)
+    else:
+        for cur_dir, cur_subdir, cur_files in walk(INPUT_DIR):
+            for cur_file in cur_files:
+                if cur_file.endswith(".nt"):
+                    add(SERVER_URL, GRAPH_URL, cur_dir + sep + cur_file)
 
-    print("Done")
