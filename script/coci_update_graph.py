@@ -44,7 +44,7 @@ if __name__ == "__main__":
         add(SERVER_URL, GRAPH_URL, INPUT_FILE)
     else:
         for cur_dir, cur_subdir, cur_files in walk(INPUT_DIR):
-            for cur_file in cur_files:
+            for cur_file in sorted(cur_files, key=int):
                 if cur_file.endswith(".nt"):
                     add(SERVER_URL, GRAPH_URL, cur_dir + sep + cur_file)
 
