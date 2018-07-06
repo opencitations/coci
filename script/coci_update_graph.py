@@ -13,6 +13,8 @@ def add(server, g_url, f_n):
     server.setQuery('LOAD <file:' + abspath(f_n) + '> INTO GRAPH <' + g_url + '>')
     server.query()
     print("Done")
+    with open("coci_update_graph", "a") as h:
+        h.write("Added file %s" % f_n)
 
 if __name__ == "__main__":
     arg_parser = ArgumentParser("coci_update_graph.py", description="Update COCI graph with a given input file of new triples.")
