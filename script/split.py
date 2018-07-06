@@ -38,8 +38,8 @@ if __name__ == "__main__":
 
     args = arg_parser.parse_args()
 
-    if not exists(args.out_dir):
-        makedirs(args.out_dir)
+    if not exists(args.output_dir):
+        makedirs(args.output_dir)
 
     with open(args.file) as f:
         c = 0
@@ -48,13 +48,13 @@ if __name__ == "__main__":
         for line in f:
             t += 1
             if t > args.lines:
-                store(s, args.out_dir, str(c) + args.ext)
+                store(s, args.output_dir, str(c) + args.ext)
                 s = ""
                 t = 0
                 c += 1
             s += line
         if t < args.lines:
-            store(s, args.out_dir, str(c) + args.ext)
+            store(s, args.output_dir, str(c) + args.ext)
 
     print("done")
 
