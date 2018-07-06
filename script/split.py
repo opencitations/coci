@@ -20,7 +20,7 @@ from os import makedirs, sep
 
 
 def store(s, d, f_n):
-    with open(d + sep + f_n) as g:
+    with open(d + sep + f_n, "w") as g:
         g.write(s)
 
 
