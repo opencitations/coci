@@ -226,7 +226,7 @@ class CociprocessGlob:
         else:
             list_of_items = obj['items']
 
-        print(list_of_items)
+        #print(list_of_items)
         if list_of_items != None:
             for item in list_of_items:
                 self.process_item(item, gen_lookup = gen_lookup, gen_date = gen_date, gen_ISSN_index= gen_ISSN_index, gen_orcid_index = True)
