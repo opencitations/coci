@@ -72,8 +72,8 @@ class CociprocessGlob:
             self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
 
     def update_orcid(self,fullname_val, orcid_val, doi_key):
-        if (fullname_val not in self.orcid_dic) :
-            self.orcid_dic[fullname_val] = orcid_val
+        if (fullname_val not in self.orcid_dict) :
+            self.orcid_dict[fullname_val] = orcid_val
             self.write_txtblock_on_csv(self.INDEX_ORCID_CSVPATH, '\n"%s","%s",%s'%(self.escape_inner_quotes(doi_key),self.escape_inner_quotes(fullname_val),orcid_val))
 
     def update_issn(self,issn_list, doi_key):
