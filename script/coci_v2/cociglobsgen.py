@@ -72,9 +72,18 @@ class CociprocessGlob:
             self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
 
     def update_orcid(self,fullname_val, orcid_val, doi_key):
+        writeit = False
         if (fullname_val not in self.orcid_dict) :
-            self.orcid_dict[fullname_val] = orcid_val
-            self.write_txtblock_on_csv(self.INDEX_ORCID_CSVPATH, '\n"%s","%s",%s'%(self.escape_inner_quotes(doi_key),self.escape_inner_quotes(fullname_val),orcid_val))
+            self.orcid_dict[fullname_val] = [orcid_val]
+            writeit = True
+        else:
+            if orcid_val not in self.orcid_dict[fullname_val]:
+                self.orcid_dict[fullname_val].append(orcid_val)
+                writeit = True
+
+        if writeit:
+            self.write_txtblock_on_csv(self.INDEX_ORCID_CSVPATH, '\n"%s",%s,"%s"'%(self.escape_inner_quotes(fullname_val),orcid_val,self.escape_inner_quotes(doi_key)))
+
 
     def update_issn(self,issn_list, doi_key):
 
@@ -133,7 +142,7 @@ class CociprocessGlob:
         if GEN_ORCID:
             self.check_make_dirs(self.INDEX_ORCID_CSVPATH)
             self.INDEX_ORCID_CSVPATH = "%s/orcid.csv"%(self.INDEX_ORCID_CSVPATH)
-            self.init_csv(self.INDEX_ORCID_CSVPATH,'doi,author,orcid')
+            self.init_csv(self.INDEX_ORCID_CSVPATH,'author,orcid,source_doi')
 
 
     def build_pubdate(self,obj, doi_val):
