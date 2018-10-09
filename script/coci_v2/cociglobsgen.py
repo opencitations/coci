@@ -257,6 +257,8 @@ if __name__ == "__main__":
 
     if args.output_dir:
         cpg.INDEX_DATE_CSVPATH = '%s'%args.output_dir
+        cpg.INDEX_ISSN_CSVPATH = '%s'%args.output_dir
+        cpg.INDEX_ORCID_CSVPATH = '%s'%args.output_dir
 
     full_input_path = "%s"%args.input_dir
 
