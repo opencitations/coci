@@ -176,14 +176,26 @@ class Cocirefprocess:
                     self.issn_dic[row['id']] = [row['value']]
 
     def init_orcid_dic(self):
+        self.orcid_dic['by_name'] = {}
+        self.orcid_dic['by_doi'] = {}
         with open(self.INDEX_ORCID_GLOBAL_CSVPATH,'r') as csvfile:
             csv_reader = csv.DictReader(csvfile)
             for row in csv_reader:
-                if row['doi'] in self.orcid_dic:
-                    self.orcid_dic[row['author']] = row['orcid']
+                # By NAME
+                if row['author'] in self.orcid_dic['by_name']:
+                    if row['orcid'] not in self.orcid_dic['by_name'][row['author']]:
+                        self.orcid_dic['by_name'][row['author']].append(row['orcid'])
                 else:
-                    self.orcid_dic[row['doi']] = {}
-                    self.orcid_dic[row['author']] = row['orcid']
+                    self.orcid_dic['by_name'][row['author']] = []
+                    self.orcid_dic['by_name'][row['author']].append(row['orcid'])
+
+                # By DOI
+                if row['doi'] in self.orcid_dic['by_doi']:
+                    if row['orcid'] not in self.orcid_dic['by_doi'][row['doi']]:
+                        self.orcid_dic['by_doi'][row['doi']].append(row['orcid'])
+                else:
+                    self.orcid_dic['by_doi'][row['doi']] = []
+                    self.orcid_dic['by_doi'][row['doi']].append(row['orcid'])
 
     def update_processed(self,doi_key):
         if doi_key not in self.processed_dic:
@@ -400,21 +412,14 @@ class Cocirefprocess:
 
     def build_orcid_list(self,obj, doi_val):
         list_orcids = []
-        if 'author' in obj:
-            for a in obj['author']:
-                if 'ORCID' in a:
-                    list_orcids.append(a['ORCID'])
-                else:
-                    if doi_val in self.orcid_dic:
-                        full_name = ""
-                        if "given" in a:
-                            full_name = full_name + str(a["given"])
-                        if "family" in a:
-                            full_name = full_name + str(a["family"])
-                        if full_name in self.orcid_dic[doi_val]:
-                            list_orcids.append(self.orcid_dic[doi_val][full_name])
+        if doi_val in self.orcid_dic['by_doi']:
+            list_orcids = self.orcid_dic['by_doi'][doi_val]
+        else:
+            #in case doi have no orcids
+            #maybe looking at the name of each author (in case we have a list)
+            #can find associated ORCIDs
+            pass
         return list_orcids
-
 
     def process_list_items(self,obj, obj_file_id, message_key = True):
         if obj_file_id not in self.file_dic:
@@ -640,6 +645,7 @@ if __name__ == "__main__":
         cp.INDEX_ISSN_GLOBAL_CSVPATH = "%s/issn.csv"%(args.glob_dir)
         cp.INDEX_ORCID_GLOBAL_CSVPATH = "%s/orcid.csv"%(args.glob_dir)
 
+    #API Calls are made when we don't find a date and we wish to look for it again
     if args.api_flag:
         cp.API_CALL = True
 
