@@ -27,6 +27,9 @@ class Citation(object):
     __has_citation_time_span = URIRef(__cito_base + "hasCitationTimeSpan")
     __has_citing_entity = URIRef(__cito_base + "hasCitingEntity")
     __has_cited_entity = URIRef(__cito_base + "hasCitedEntity")
+    #self citations
+    __journal_self_citation = URIRef(__cito_base + "JournalSelfCitation")
+    __author_self_citation = URIRef(__cito_base + "AuthorSelfCitation")
 
     __datacite_base = "http://purl.org/spar/datacite/"
     __has_identifier = URIRef(__datacite_base + "hasIdentifier")
@@ -48,13 +51,15 @@ class Citation(object):
     def __init__(self,
                  citing_entity_local_id, citing_url, citing_pub_date,
                  cited_entity_local_id, cited_url, cited_pub_date,
-                 prov_agent_url, source, prov_date, creation_date = None, duration= None, oci= None):
+                 prov_agent_url, source, prov_date, author_sc = False, journal_sc = False, creation_date = None, duration= None, oci= None):
 
         self.oci = oci
         if self.oci == None:
             self.oci = citing_entity_local_id + "-" + cited_entity_local_id
         self.citing_url = citing_url
         self.cited_url = cited_url
+        self.author_sc = author_sc
+        self.journal_sc = journal_sc
 
         self.creation_date = creation_date
         self.duration = duration
@@ -86,8 +91,13 @@ class Citation(object):
         if include_data:
             citing_br = URIRef(self.citing_url)
             cited_br = URIRef(self.cited_url)
-            
+
             citation_graph.add((citation, RDF.type, self.__citation))
+            if self.author_sc:
+                citation_graph.add((citation, RDF.type, self.__author_self_citation))
+            if self.journal_sc:
+                citation_graph.add((citation, RDF.type, self.__journal_self_citation))
+
             citation_graph.add((citation, self.__has_citing_entity, citing_br))
             citation_graph.add((citation, self.__has_cited_entity, cited_br))
             if include_rdfs_lbl:

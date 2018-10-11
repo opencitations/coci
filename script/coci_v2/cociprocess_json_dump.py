@@ -190,12 +190,12 @@ class Cocirefprocess:
                     self.orcid_dic['by_name'][row['author']].append(row['orcid'])
 
                 # By DOI
-                if row['doi'] in self.orcid_dic['by_doi']:
-                    if row['orcid'] not in self.orcid_dic['by_doi'][row['doi']]:
-                        self.orcid_dic['by_doi'][row['doi']].append(row['orcid'])
+                if row['source_doi'] in self.orcid_dic['by_doi']:
+                    if row['orcid'] not in self.orcid_dic['by_doi'][row['source_doi']]:
+                        self.orcid_dic['by_doi'][row['source_doi']].append(row['orcid'])
                 else:
-                    self.orcid_dic['by_doi'][row['doi']] = []
-                    self.orcid_dic['by_doi'][row['doi']].append(row['orcid'])
+                    self.orcid_dic['by_doi'][row['source_doi']] = []
+                    self.orcid_dic['by_doi'][row['source_doi']].append(row['orcid'])
 
     def update_processed(self,doi_key):
         if doi_key not in self.processed_dic:
@@ -235,11 +235,15 @@ class Cocirefprocess:
         self.date_dic = {}
         self.file_dic = {}
 
+        print("Init the Lookup dictionary ...")
         self.init_lookup_dic()
         self.init_file_dic()
         self.init_processed_dic()
+        print("Init the Dates dictionary ...")
         self.init_date_dic()
+        print("Init the ISSN dictionary ...")
         self.init_issn_dic()
+        print("Init the ORCID dictionary ...")
         self.init_orcid_dic()
 
         maxid = 0
