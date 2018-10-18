@@ -218,7 +218,7 @@ class CociprocessGlob:
                                     full_name = full_name + str(a["given"])
                                 if "family" in a:
                                     full_name = full_name + " "+ str(a["family"])
-                                self.update_orcid(full_name, groups[0], citing_doi)
+                                self.update_orcid(full_name, str(groups[0]), citing_doi)
 
 
         else:
