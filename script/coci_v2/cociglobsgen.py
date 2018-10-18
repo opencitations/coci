@@ -187,7 +187,8 @@ class CociprocessGlob:
         return ""
 
     def process_item(self,obj, gen_lookup = True, gen_date = True, gen_ISSN_index = True, gen_orcid_index = True):
-        if (("DOI" in obj) and ("reference" in obj)):
+        #if (("DOI" in obj) and ("reference" in obj)):
+        if "DOI" in obj:
             citing_doi = obj["DOI"].lower()
             if gen_date:
                 citing_date = self.build_pubdate(obj,citing_doi)
@@ -195,10 +196,11 @@ class CociprocessGlob:
 
             if gen_lookup:
                 self.convert_doi_to_ci(citing_doi)
-                for ref_item in obj['reference']:
-                    if "DOI" in ref_item:
-                        cited_doi = ref_item["DOI"].lower()
-                        self.convert_doi_to_ci(cited_doi)
+                if "reference" in obj:
+                    for ref_item in obj['reference']:
+                        if "DOI" in ref_item:
+                            cited_doi = ref_item["DOI"].lower()
+                            self.convert_doi_to_ci(cited_doi)
 
             if gen_ISSN_index:
                 if "ISSN" in obj :
@@ -208,12 +210,15 @@ class CociprocessGlob:
                 if "author" in obj :
                     for a in obj['author']:
                         if "ORCID" in a:
-                            full_name = ""
-                            if "given" in a:
-                                full_name = full_name + str(a["given"])
-                            if "family" in a:
-                                full_name = full_name + " "+ str(a["family"])
-                            self.update_orcid(full_name, a['ORCID'], citing_doi)
+                            #check if ORCID matches
+                            groups = re.search("([\S]{4}-[\S]{4}-[\S]{4}-[\S]{4})",a['ORCID'])
+                            if groups:
+                                full_name = ""
+                                if "given" in a:
+                                    full_name = full_name + str(a["given"])
+                                if "family" in a:
+                                    full_name = full_name + " "+ str(a["family"])
+                                self.update_orcid(full_name, groups[0], citing_doi)
 
 
         else:
