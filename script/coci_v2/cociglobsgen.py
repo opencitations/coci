@@ -9,6 +9,29 @@ import errno
 import datetime
 from dateutil.parser import parse
 
+def compare_dates(org_date, new_date):
+    groups_new_date = re.findall(date_reg_format(new_date),new_date)[0]
+    groups_org_date = re.findall(date_reg_format(org_date),org_date)[0]
+    dif = len(groups_new_date) - len(groups_org_date)
+    if dif == 0 or dif < 0:
+        return org_date
+    else:
+        better_bool = True
+        for i in range(0,len(groups_org_date)):
+            better_bool = better_bool and (groups_new_date[i] == groups_org_date[i])
+        if better_bool:
+            return new_date
+
+def date_reg_format(my_date):
+    if len(my_date) == 4:
+        return "([0-9]{4})"
+    if len(my_date) == 7:
+        return "([0-9]{4})-([0-9]{2})"
+    if len(my_date) == 10:
+        return "([0-9]{4})-([0-9]{2})-([0-9]{2})"
+    return -1
+
+
 class CociprocessGlob:
 
     def __init__(self):
@@ -70,6 +93,9 @@ class CociprocessGlob:
         if (doi_key not in self.date_dic) or (self.date_dic[doi_key] == "" and date_val != ""):
             self.date_dic[doi_key] = date_val
             self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
+        else:
+            #check if it's a better date
+            compare_dates(self.date_dic[doi_key], date_val)
 
     def update_orcid(self,fullname_val, orcid_val, doi_key):
         writeit = False
