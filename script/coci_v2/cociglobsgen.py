@@ -316,7 +316,7 @@ class CociprocessGlob:
         #print(list_of_items)
         if list_of_items != None:
             for item in list_of_items:
-                self.process_item(item, gen_lookup = gen_lookup, gen_date = gen_date, gen_ISSN_index= gen_ISSN_index, gen_orcid_index = True, gen_date_refs= gen_date_refs )
+                self.process_item(item, gen_lookup = gen_lookup, gen_date = gen_date, gen_ISSN_index= gen_ISSN_index, gen_orcid_index = gen_orcid_index, gen_date_refs= gen_date_refs )
             else:
                 return -1
 
