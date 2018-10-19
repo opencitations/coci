@@ -45,6 +45,8 @@ def date_reg_format(my_date):
         return "([0-9]{4})-([0-9]{2})-([0-9]{2})"
     return -1
 
+def escape_inner_quotes(str_val):
+    return str_val.replace('"', '""')
 
 class CociprocessGlob:
 
@@ -110,45 +112,26 @@ class CociprocessGlob:
 
     def update_date(self,date_val, doi_key):
         if doi_key not in self.date_dic:
-            if date_val != -1:
                 self.date_dic[doi_key] = date_val
-                self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
         else:
             #check if it's a better date
-            #print(date_val)
-            compare_dates(self.date_dic[doi_key], date_val)
+            self.date_dic[doi_key] = compare_dates(self.date_dic[doi_key], date_val)
 
     def update_orcid(self,fullname_val, orcid_val, doi_key):
-        writeit = False
-        if (fullname_val not in self.orcid_dict) :
-            self.orcid_dict[fullname_val] = [orcid_val]
-            writeit = True
-        else:
-            if orcid_val not in self.orcid_dict[fullname_val]:
-                self.orcid_dict[fullname_val].append(orcid_val)
-                writeit = True
+        if doi_key not in self.orcid_dict :
+            self.orcid_dict[doi_key] = {}
 
-        if writeit:
-            self.write_txtblock_on_csv(self.INDEX_ORCID_CSVPATH, '\n"%s",%s,"%s"'%(self.escape_inner_quotes(fullname_val),orcid_val,self.escape_inner_quotes(doi_key)))
+        if orcid_val not in self.orcid_dict[doi_key] :
+            self.orcid_dict[doi_key][orcid_val] = fullname_val
+            self.write_txtblock_on_csv(self.INDEX_ORCID_CSVPATH, '\n"%s",%s,"%s"'%(escape_inner_quotes(fullname_val),orcid_val,escape_inner_quotes(doi_key)))
 
+    def update_issn(self,issn_val, doi_key):
+        if doi_key not in self.issn_dict:
+            self.issn_dict[doi_key] = []
 
-    def update_issn(self,issn_list, doi_key):
-
-        for issn_val in issn_list:
-            writeit = False
-            if issn_val in self.issn_dict:
-                if doi_key not in self.issn_dict[issn_val]:
-                    writeit = True
-            else:
-                self.issn_dict[issn_val] = []
-                writeit = True
-
-            if writeit:
-                self.issn_dict[issn_val].append(doi_key)
-                self.write_txtblock_on_csv(self.INDEX_ISSN_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key), issn_val))
-
-    def escape_inner_quotes(self,str_val):
-        return str_val.replace('"', '""')
+        if issn_val not in self.issn_dict[doi_key]:
+            self.issn_dict[doi_key].append(issn_val)
+            self.write_txtblock_on_csv(self.INDEX_ISSN_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(doi_key), issn_val))
 
     ###############  Convert CrossRef DOI to CI
     def calc_next_lookup_code(self):
@@ -267,14 +250,16 @@ class CociprocessGlob:
             citing_doi = obj["DOI"].lower()
             if gen_date:
                 citing_date = self.build_pubdate(obj,citing_doi)
-                self.update_date(citing_date, citing_doi)
+                if citing_date != -1:
+                    self.update_date(citing_date, citing_doi)
             elif gen_date_refs:
                 if "reference" in obj:
                     for ref_item in obj['reference']:
                         if "DOI" in ref_item:
                             cited_doi = ref_item["DOI"].lower()
                             cited_date = self.build_pubdate(ref_item,cited_doi)
-                            self.update_date(cited_date, cited_doi)
+                            if cited_date != -1:
+                                self.update_date(cited_date, cited_doi)
 
             if gen_lookup:
                 self.convert_doi_to_ci(citing_doi)
@@ -286,7 +271,10 @@ class CociprocessGlob:
 
             if gen_ISSN_index:
                 if "ISSN" in obj :
-                    self.update_issn(obj["ISSN"], citing_doi)
+                    for issn_val in obj["ISSN"]:
+                        if re.search("([\S]{4}-[\S]{4})",issn_val):
+                            self.update_issn(issn_val, citing_doi)
+
 
             if gen_orcid_index:
                 if "author" in obj :
@@ -367,6 +355,7 @@ if __name__ == "__main__":
         GEN_DATE_REFS = True
     else:
         cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE)
+
     cpg.init_lookup_dic()
 
     for subdir, dirs, files in os.walk(full_input_path):
@@ -375,3 +364,8 @@ if __name__ == "__main__":
                 print(file)
                 data = json.load(open(os.path.join(subdir, file)))
                 cpg.genGlobs(data, message_key = False, gen_lookup = GEN_LOOKUP, gen_date = GEN_DATE, gen_ISSN_index = GEN_ISSN, gen_orcid_index = GEN_ORCID, gen_date_refs = GEN_DATE_REFS)
+
+    #write all on csv
+    if GEN_DATE or GEN_DATE_REFS:
+        for key_elem in cpg.date_dic:
+            cpg.write_txtblock_on_csv(cpg.INDEX_DATE_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(key_elem), cpg.date_dic[key_elem]))
