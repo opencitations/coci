@@ -10,8 +10,19 @@ import datetime
 from dateutil.parser import parse
 
 def compare_dates(org_date, new_date):
-    groups_new_date = re.findall(date_reg_format(new_date),new_date)[0]
-    groups_org_date = re.findall(date_reg_format(org_date),org_date)[0]
+
+    groups_new_date = None
+    groups_org_date = None
+    if date_reg_format(new_date) != -1:
+        groups_new_date = re.findall(date_reg_format(new_date),new_date)[0]
+        if date_reg_format(org_date) != -1:
+            groups_org_date = re.findall(date_reg_format(org_date),org_date)[0]
+        else:
+            return new_date
+    else:
+        return org_date
+
+    #both are valid date formats
     dif = len(groups_new_date) - len(groups_org_date)
     if dif == 0 or dif < 0:
         return org_date
@@ -21,6 +32,9 @@ def compare_dates(org_date, new_date):
             better_bool = better_bool and (groups_new_date[i] == groups_org_date[i])
         if better_bool:
             return new_date
+
+    #all other cases
+    return org_date
 
 def date_reg_format(my_date):
     if len(my_date) == 4:
@@ -88,13 +102,20 @@ class CociprocessGlob:
             self.lookup_dic[c] = code
             self.write_txtblock_on_csv(self.LOOKUP_CSV, '\n"%s","%s"'%(c,code))
 
+    def init_date_dic(self):
+        with open(self.INDEX_DATE_CSVPATH,'r') as datecsv:
+            datecsv_reader = csv.DictReader(datecsv)
+            for row in datecsv_reader:
+                self.date_dic[row['id']] = row['value']
 
     def update_date(self,date_val, doi_key):
-        if (doi_key not in self.date_dic) or (self.date_dic[doi_key] == "" and date_val != ""):
-            self.date_dic[doi_key] = date_val
-            self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
+        if doi_key not in self.date_dic:
+            if date_val != -1:
+                self.date_dic[doi_key] = date_val
+                self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
         else:
             #check if it's a better date
+            #print(date_val)
             compare_dates(self.date_dic[doi_key], date_val)
 
     def update_orcid(self,fullname_val, orcid_val, doi_key):
@@ -210,15 +231,50 @@ class CociprocessGlob:
 
                 except:
                     pass
-        return ""
+        else:
+            #ref case
+            if 'year' in obj:
+                try:
+                    ref_year = obj['year']
+                    dateparts = ref_year.split("-")
 
-    def process_item(self,obj, gen_lookup = True, gen_date = True, gen_ISSN_index = True, gen_orcid_index = True):
+                    groups = re.search("([\d]{4})[\S]{1}", dateparts[0])
+                    if groups:
+                        ref_year = groups.group(1)
+
+                    dformat = ''
+                    if len(dateparts) == 1 :
+                        dformat = '%Y'
+                    elif len(dateparts) == 2 :
+                        dformat = '%Y-%m'
+                    elif len(dateparts) == 3 and (dateparts[1] != 1 or (dateparts[1] == 1 and dateparts[2] != 1)):
+                        dformat = '%Y-%m-%d'
+
+                    default_date = datetime.datetime(1970, 1, 1, 0, 0)
+                    date_val = parse(ref_year, default=default_date)
+
+                    date_in_str = date_val.strftime(dformat)
+                    return date_in_str
+                except:
+                    print(obj['DOI']," : ",ref_year)
+                    pass
+
+        return -1
+
+    def process_item(self,obj, gen_lookup = True, gen_date = True, gen_ISSN_index = True, gen_orcid_index = True, gen_date_refs=False):
         #if (("DOI" in obj) and ("reference" in obj)):
         if "DOI" in obj:
             citing_doi = obj["DOI"].lower()
             if gen_date:
                 citing_date = self.build_pubdate(obj,citing_doi)
                 self.update_date(citing_date, citing_doi)
+            elif gen_date_refs:
+                if "reference" in obj:
+                    for ref_item in obj['reference']:
+                        if "DOI" in ref_item:
+                            cited_doi = ref_item["DOI"].lower()
+                            cited_date = self.build_pubdate(ref_item,cited_doi)
+                            self.update_date(cited_date, cited_doi)
 
             if gen_lookup:
                 self.convert_doi_to_ci(citing_doi)
@@ -251,7 +307,7 @@ class CociprocessGlob:
             return -1
 
 
-    def genGlobs(self,obj, message_key = True, gen_lookup = True, gen_date = True, gen_ISSN_index = True, gen_orcid_index = True):
+    def genGlobs(self,obj, message_key = True, gen_lookup = True, gen_date = True, gen_ISSN_index = True, gen_orcid_index = True, gen_date_refs = False):
         if message_key:
             list_of_items = obj['message']['items']
         else:
@@ -260,7 +316,7 @@ class CociprocessGlob:
         #print(list_of_items)
         if list_of_items != None:
             for item in list_of_items:
-                self.process_item(item, gen_lookup = gen_lookup, gen_date = gen_date, gen_ISSN_index= gen_ISSN_index, gen_orcid_index = True)
+                self.process_item(item, gen_lookup = gen_lookup, gen_date = gen_date, gen_ISSN_index= gen_ISSN_index, gen_orcid_index = True, gen_date_refs= gen_date_refs )
             else:
                 return -1
 
@@ -274,6 +330,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lk", action="store_true", dest="lookup_flag", required=False, help="Specify wheter you want to generate the index of lookup.")
     arg_parser.add_argument("-issn", action="store_true", dest="issn_flag", required=False, help="Specify wheter you want to generate the index of issn.")
     arg_parser.add_argument("-date", action="store_true", dest="date_flag", required=False, help="Specify wheter you want to generate the index of dates.")
+    arg_parser.add_argument("-daterefs", dest="daterefs_path", required=False, help="Specify wheter you want to generate the index of dates for the refs.")
 
     args = arg_parser.parse_args()
 
@@ -302,7 +359,14 @@ if __name__ == "__main__":
 
     full_input_path = "%s"%args.input_dir
 
-    cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE)
+    GEN_DATE_REFS = False
+    if args.daterefs_path:
+        #init dic of dates
+        cpg.INDEX_DATE_CSVPATH = '%s'%args.daterefs_path
+        cpg.init_date_dic()
+        GEN_DATE_REFS = True
+    else:
+        cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE)
     cpg.init_lookup_dic()
 
     for subdir, dirs, files in os.walk(full_input_path):
@@ -310,4 +374,4 @@ if __name__ == "__main__":
             if file.lower().endswith('.json'):
                 print(file)
                 data = json.load(open(os.path.join(subdir, file)))
-                cpg.genGlobs(data, message_key = False, gen_lookup = GEN_LOOKUP, gen_date = GEN_DATE, gen_ISSN_index = GEN_ISSN, gen_orcid_index = GEN_ORCID)
+                cpg.genGlobs(data, message_key = False, gen_lookup = GEN_LOOKUP, gen_date = GEN_DATE, gen_ISSN_index = GEN_ISSN, gen_orcid_index = GEN_ORCID, gen_date_refs = GEN_DATE_REFS)
