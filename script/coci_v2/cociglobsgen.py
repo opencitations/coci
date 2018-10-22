@@ -221,15 +221,23 @@ class CociprocessGlob:
                     ref_year = obj['year']
                     dateparts = ref_year.split("-")
 
-                    groups = re.search("([\d]{4})[\S]{1}", dateparts[0])
-                    if groups:
-                        ref_year = groups.group(1)
-
-                    dformat = ''
                     if len(dateparts) == 1 :
+                        #situations like 2005a
+                        groups = re.search("([\d]{4})[\S]{1}", dateparts[0])
+                        if groups:
+                            ref_year = groups.group(1)
                         dformat = '%Y'
+
                     elif len(dateparts) == 2 :
-                        dformat = '%Y-%m'
+                        #month format have only 2
+                        if len(dateparts[1]) < 3:
+                            dformat = '%Y-%m'
+                        else:
+                            groups = re.search("([\d]{4})", dateparts[0])
+                            if groups:
+                                ref_year = groups.group(1)
+                            dformat = '%Y'
+
                     elif len(dateparts) == 3 and (dateparts[1] != 1 or (dateparts[1] == 1 and dateparts[2] != 1)):
                         dformat = '%Y-%m-%d'
 
@@ -239,7 +247,7 @@ class CociprocessGlob:
                     date_in_str = date_val.strftime(dformat)
                     return date_in_str
                 except:
-                    print(obj['DOI']," : ",ref_year)
+                    print(obj['DOI']," : ",ref_year," ",dateparts)
                     pass
 
         return -1
