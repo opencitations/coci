@@ -359,8 +359,11 @@ if __name__ == "__main__":
     if args.daterefs_path:
         #init dic of dates
         cpg.INDEX_DATE_CSVPATH = '%s'%args.daterefs_path
+        print("Loading all the list of dates ...")
         cpg.init_date_dic()
+        print("Done Loading")
         GEN_DATE_REFS = True
+        print("Processing the reference list of all the items ...")
     else:
         cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE)
 
