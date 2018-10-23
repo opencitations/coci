@@ -54,6 +54,7 @@ class CociprocessGlob:
         self.CROSSREF_CODE = '020'
         self.LOOKUP_CSV = 'lookup.csv'
         self.INDEX_DATE_CSVPATH = 'index/'
+        self.INDEX_DATE_REFS_CSVPATH = 'index/'
         self.INDEX_ISSN_CSVPATH = 'index/'
         self.INDEX_ORCID_CSVPATH = 'index/'
         self.lookup_code = 0
@@ -157,12 +158,17 @@ class CociprocessGlob:
         return ci_str
 
 
-    def init_dirs_skeleton(self,GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE):
+    def init_dirs_skeleton(self,GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE, GEN_DATE_REFS):
 
         if GEN_DATE:
             self.check_make_dirs(self.INDEX_DATE_CSVPATH)
             self.INDEX_DATE_CSVPATH = "%s/date.csv"%(self.INDEX_DATE_CSVPATH)
             self.init_csv(self.INDEX_DATE_CSVPATH,'id,value')
+
+        if GEN_DATE_REFS:
+            self.check_make_dirs(self.INDEX_DATE_REFS_CSVPATH)
+            self.INDEX_DATE_REFS_CSVPATH = "%s/date_with_refs.csv"%(self.INDEX_DATE_REFS_CSVPATH)
+            self.init_csv(self.INDEX_DATE_REFS_CSVPATH,'id,value')
 
         if GEN_ISSN:
             self.check_make_dirs(self.INDEX_ISSN_CSVPATH)
@@ -326,6 +332,7 @@ if __name__ == "__main__":
     arg_parser.add_argument("-lk", action="store_true", dest="lookup_flag", required=False, help="Specify wheter you want to generate the index of lookup.")
     arg_parser.add_argument("-issn", action="store_true", dest="issn_flag", required=False, help="Specify wheter you want to generate the index of issn.")
     arg_parser.add_argument("-date", action="store_true", dest="date_flag", required=False, help="Specify wheter you want to generate the index of dates.")
+    arg_parser.add_argument("-daterefsindex", dest="daterefs_index_path", required=False, help="Specify the initial dates index for the refs.")
     arg_parser.add_argument("-daterefs", dest="daterefs_path", required=False, help="Specify wheter you want to generate the index of dates for the refs.")
 
     args = arg_parser.parse_args()
@@ -358,25 +365,33 @@ if __name__ == "__main__":
     GEN_DATE_REFS = False
     if args.daterefs_path:
         #init dic of dates
-        cpg.INDEX_DATE_CSVPATH = '%s'%args.daterefs_path
+        cpg.INDEX_DATE_CSVPATH = '%s'%args.daterefs_index_path
+        cpg.INDEX_DATE_REFS_CSVPATH = '%s'%args.daterefs_path
         print("Loading all the list of dates ...")
         cpg.init_date_dic()
         print("Done Loading")
         GEN_DATE_REFS = True
         print("Processing the reference list of all the items ...")
+        cpg.init_dirs_skeleton(False, False, False, False, GEN_DATE_REFS)
     else:
-        cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE)
+        cpg.init_dirs_skeleton(GEN_ORCID, GEN_LOOKUP, GEN_ISSN, GEN_DATE, GEN_DATE_REFS)
 
     cpg.init_lookup_dic()
 
+    count = 1
     for subdir, dirs, files in os.walk(full_input_path):
         for file in files:
             if file.lower().endswith('.json'):
-                print(file)
+                print(file, str(count)+"/"+str(len(files)))
+                count = count + 1
                 data = json.load(open(os.path.join(subdir, file)))
                 cpg.genGlobs(data, message_key = False, gen_lookup = GEN_LOOKUP, gen_date = GEN_DATE, gen_ISSN_index = GEN_ISSN, gen_orcid_index = GEN_ORCID, gen_date_refs = GEN_DATE_REFS)
 
     #write all on csv
-    if GEN_DATE or GEN_DATE_REFS:
+    if GEN_DATE:
         for key_elem in cpg.date_dic:
             cpg.write_txtblock_on_csv(cpg.INDEX_DATE_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(key_elem), cpg.date_dic[key_elem]))
+
+    if GEN_DATE_REFS:
+        for key_elem in cpg.date_dic:
+            cpg.write_txtblock_on_csv(cpg.INDEX_DATE_REFS_CSVPATH, '\n"%s",%s'%(escape_inner_quotes(key_elem), cpg.date_dic[key_elem]))
