@@ -33,7 +33,6 @@ class Cocirefprocess:
         self.OUT_DATA_PATH = "data/"
         self.OUT_PROV_PATH = "prov/"
         self.LOOKUP_CSV = 'lookup.csv'
-        # self.INDEX_DATE_CSVPATH = 'date.csv'
         self.INDEX_DATE_GLOBAL_CSVPATH = 'date.csv'
         self.INDEX_ISSN_GLOBAL_CSVPATH = 'issn.csv'
         self.INDEX_ORCID_GLOBAL_CSVPATH = 'orcid.csv'
@@ -42,11 +41,10 @@ class Cocirefprocess:
         self.INDEX_ERRORS_CSVPATH = 'index/'
         self.INDEX_NODOI_CSVPATH = 'index/'
         self.INDEX_FILE_CSVPATH = 'index/'
-        self.INDEX_DATE_CSVPATH = 'index/'
 
         self.INPUT_DATA_PATH = ['crossrefdump/']
 
-        self.MAX_DATA_ENTRIES = 10000
+        self.MAX_DATA_ENTRIES = 100000
         self.datacsv_counter = 0
         self.file_id = 0
 
@@ -98,7 +96,6 @@ class Cocirefprocess:
         self.check_make_dirs(self.OUT_PROV_PATH)
         self.check_make_dirs(self.INDEX_PROCESSED_CSVPATH)
         self.check_make_dirs(self.INDEX_ERRORS_CSVPATH)
-        self.check_make_dirs(self.INDEX_DATE_CSVPATH)
         self.check_make_dirs(self.INDEX_NODOI_CSVPATH)
         self.check_make_dirs(self.INDEX_FILE_CSVPATH)
 
@@ -117,9 +114,6 @@ class Cocirefprocess:
         self.INDEX_FILE_CSVPATH = "%sfile.csv"%(self.INDEX_FILE_CSVPATH)
         self.init_csv(self.INDEX_FILE_CSVPATH,'id')
 
-        self.INDEX_DATE_CSVPATH = "%sdate.csv" % (self.INDEX_DATE_CSVPATH)
-        self.init_csv(self.INDEX_DATE_CSVPATH, 'id,value')
-
     def init_output_paths(self,out_o):
         self.OUT_DATA_PATH = "%s/data/"%out_o
         self.OUT_PROV_PATH = "%s/prov/"%out_o
@@ -127,7 +121,6 @@ class Cocirefprocess:
         self.INDEX_ERRORS_CSVPATH = '%s/index/'%out_o
         self.INDEX_NODOI_CSVPATH = '%s/index/'%out_o
         self.INDEX_FILE_CSVPATH = '%s/index/'%out_o
-        self.INDEX_DATE_CSVPATH = '%s/index/' % out_o
 
     #init the lookup_dic by the contents of its corresponding csv
     def init_lookup_dic(self):
@@ -151,16 +144,7 @@ class Cocirefprocess:
             self.lookup_dic[c] = code
             self.write_txtblock_on_csv(self.LOOKUP_CSV, '\n"%s","%s"'%(c,code))
 
-    def update_date(self,date_val, doi_key):
-        if (doi_key not in self.date_dic) or (self.date_dic[doi_key] == "" and date_val != ""):
-            self.date_dic[doi_key] = date_val
-            self.write_txtblock_on_csv(self.INDEX_DATE_CSVPATH, '\n"%s",%s'%(self.escape_inner_quotes(doi_key),date_val))
-
     def init_date_dic(self):
-        with open(self.INDEX_DATE_CSVPATH,'r') as csvfile:
-            csv_reader = csv.DictReader(csvfile)
-            for row in csv_reader:
-                self.date_dic[row['id']] = row['value']
         with open(self.INDEX_DATE_GLOBAL_CSVPATH,'r') as csvfile:
             csv_reader = csv.DictReader(csvfile)
             for row in csv_reader:
@@ -237,7 +221,9 @@ class Cocirefprocess:
 
         print("Init the Lookup dictionary ...")
         self.init_lookup_dic()
+        print("Init the list of processed files dictionary ...")
         self.init_file_dic()
+        print("Init the list of items (DOIs) allready processed dictionary ...")
         self.init_processed_dic()
         print("Init the Dates dictionary ...")
         self.init_date_dic()
@@ -468,103 +454,110 @@ class Cocirefprocess:
         data_lis = []
         prov_lis = []
 
-        if (("DOI" in obj) and ("reference" in obj)):
-            print("Processing:"+obj["DOI"])
-            citing_doi = obj["DOI"].lower()
-            citing_ci = self.convert_doi_to_ci(citing_doi)
-            citing_date = self.build_pubdate(obj,citing_doi)
-            citing_issn = []
-            if citing_doi in self.issn_dic:
-                citing_issn = self.issn_dic[citing_doi]
-            citing_orcids = self.build_orcid_list(obj,citing_doi)
+        if "DOI" not in obj:
+            return {"citing_doi": "none", "errors": "entry without a DOI"}
+        else:
+            if not re.search(r'^10.', obj["DOI"]):
+                return {"citing_doi": "none", "errors": "entry with undefined DOI"}
 
-            #update dates
-            #self.update_date(citing_date, citing_doi)
+        if "reference" not in obj:
+            return {"citing_doi": "none", "errors": "entry without a Ref-List"}
 
-            #in case this is the first time i am elaborating this item
-            if citing_doi not in self.processed_dic:
+        #print("Processing:"+obj["DOI"])
+        citing_doi = obj["DOI"].lower()
+        citing_ci = self.convert_doi_to_ci(citing_doi)
+        citing_date = self.build_pubdate(obj,citing_doi)
+        citing_issn = []
+        if citing_doi in self.issn_dic:
+            citing_issn = self.issn_dic[citing_doi]
+        citing_orcids = self.build_orcid_list(obj,citing_doi)
 
-                data_txtblock = ""
-                prov_txtblock = ""
+        #update dates
+        #self.update_date(citing_date, citing_doi)
 
-                #iterate through all references
-                for ref_item in obj['reference']:
+        #in case this is the first time i am elaborating this item
+        if citing_doi not in self.processed_dic:
 
-                    ref_entry_attr = self.process_ref_entry(ref_item)
-                    #in case a No-DOI request has been called
-                    nodoi_text = ref_entry_attr["nodoi_text"]
-                    if (nodoi_text != -1):
-                        citednodoi = ""
-                        if ref_entry_attr["value"] != -1:
-                            citednodoi = ref_entry_attr["value"]["cited_doi"]
-                        self.update_nodoi(citing_doi, citednodoi, nodoi_text)
+            data_txtblock = ""
+            prov_txtblock = ""
 
-                    ref_entry_attr = ref_entry_attr['value']
-                    if(ref_entry_attr != -1):
-                        if("errors" not in ref_entry_attr):
+            #iterate through all references
+            for ref_item in obj['reference']:
 
-                            #create all other data needed
-                            oci = citing_ci+"-"+ref_entry_attr['cited_ci']
+                ref_entry_attr = self.process_ref_entry(ref_item)
+                #in case a No-DOI request has been called
+                nodoi_text = ref_entry_attr["nodoi_text"]
+                if (nodoi_text != -1):
+                    citednodoi = ""
+                    if ref_entry_attr["value"] != -1:
+                        citednodoi = ref_entry_attr["value"]["cited_doi"]
+                    self.update_nodoi(citing_doi, citednodoi, nodoi_text)
 
-                            timespan = ""
-                            if citing_date != "" and ref_entry_attr['cited_date'] != "":
+                ref_entry_attr = ref_entry_attr['value']
+                if(ref_entry_attr != -1):
+                    if("errors" not in ref_entry_attr):
 
-                                #citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
-                                #cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
-                                default_date = datetime.datetime(1970, 1, 1, 0, 0)
-                                try:
-                                    citing_dt = parse(citing_date, default=default_date)
-                                    cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
+                        #create all other data needed
+                        oci = citing_ci+"-"+ref_entry_attr['cited_ci']
 
-                                    #timespan = to_iso8601(citing_dt - cited_dt)
-                                    delta = relativedelta(citing_dt, cited_dt)
-                                    timespan = citation.Citation.get_duration(delta,
-                                                                      citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
-                                                                      citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
+                        timespan = ""
+                        if citing_date != "" and ref_entry_attr['cited_date'] != "":
 
-                                    #in case the timespan is negative check the timespan with the year value
-                                    if timespan[0] == "-" :
-                                        if ref_entry_attr['cited_year'] != "":
-                                            cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
-                                            year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
-                                                                              citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
-                                                                              citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
-                                            if year_timespan[0] != "-":
-                                                timespan = year_timespan
-                                except:
-                                    pass
+                            #citing_dt = datetime.datetime.strptime(citing_date["str_val"], citing_date["format"])
+                            #cited_dt = datetime.datetime.strptime(ref_entry_attr['cited_date']["str_val"], ref_entry_attr['cited_date']["format"])
+                            default_date = datetime.datetime(1970, 1, 1, 0, 0)
+                            try:
+                                citing_dt = parse(citing_date, default=default_date)
+                                cited_dt = parse(ref_entry_attr['cited_date'], default=default_date)
 
-                            if timespan != "":
-                                if timespan[0] == "-" and nodoi_text != -1:
-                                    continue
+                                #timespan = to_iso8601(citing_dt - cited_dt)
+                                delta = relativedelta(citing_dt, cited_dt)
+                                timespan = citation.Citation.get_duration(delta,
+                                                                  citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_date']),
+                                                                  citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_date']))
 
-                            #compare issn
-                            journal_sc_val = 'no'
-                            if len(set(citing_issn) & set(ref_entry_attr['cited_issn'])) > 0:
-                                journal_sc_val = 'yes'
+                                #in case the timespan is negative check the timespan with the year value
+                                if timespan[0] == "-" :
+                                    if ref_entry_attr['cited_year'] != "":
+                                        cited_year_dt = parse(ref_entry_attr['cited_year'], default=default_date)
+                                        year_timespan = citation.Citation.get_duration(relativedelta(citing_dt, cited_year_dt),
+                                                                          citation.Citation.contains_months(citing_date) and citation.Citation.contains_months(ref_entry_attr['cited_year']),
+                                                                          citation.Citation.contains_days(citing_date) and citation.Citation.contains_days(ref_entry_attr['cited_year']))
+                                        if year_timespan[0] != "-":
+                                            timespan = year_timespan
+                            except:
+                                pass
 
-                            #compare orcids
-                            orcid_sc_val = 'no'
-                            if len(set(citing_orcids) & set(ref_entry_attr['cited_orcids'])) > 0:
-                                orcid_sc_val = 'yes'
+                        if timespan != "":
+                            if timespan[0] == "-" and nodoi_text != -1:
+                                continue
 
-                            data_txtblock = data_txtblock +'\n%s,"%s","%s",%s,%s,%s,%s'%(oci,self.escape_inner_quotes(citing_doi),self.escape_inner_quotes(ref_entry_attr['cited_doi']),citing_date,timespan,journal_sc_val,orcid_sc_val)
-                            timenow = datetime.datetime.now().replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%S")
-                            prov_txtblock = prov_txtblock + '\n%s,%s,"%s",%s'%(oci,self.conf["agent"],"https://api.crossref.org/works/%s"%(self.escape_inner_quotes(citing_doi)),timenow)
+                        #compare issn
+                        journal_sc_val = 'no'
+                        if len(set(citing_issn) & set(ref_entry_attr['cited_issn'])) > 0:
+                            journal_sc_val = 'yes'
 
-                        #we have errors
-                        else:
-                            #break all and return the errors
-                            return {"errors": ref_entry_attr["errors"], "citing_doi": citing_doi}
-                            break
+                        #compare orcids
+                        orcid_sc_val = 'no'
+                        if len(set(citing_orcids) & set(ref_entry_attr['cited_orcids'])) > 0:
+                            orcid_sc_val = 'yes'
 
-                return {
-                    "citing_doi": citing_doi,
-                    "data": data_txtblock,
-                    "prov": prov_txtblock
-                }
-            return -1
-        return {"citing_doi": "none", "errors": "entry without a DOI or Ref-List"}
+                        data_txtblock = data_txtblock +'\n%s,"%s","%s",%s,%s,%s,%s'%(oci,self.escape_inner_quotes(citing_doi),self.escape_inner_quotes(ref_entry_attr['cited_doi']),citing_date,timespan,journal_sc_val,orcid_sc_val)
+                        timenow = datetime.datetime.now().replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%S")
+                        prov_txtblock = prov_txtblock + '\n%s,%s,"%s",%s'%(oci,self.conf["agent"],"https://api.crossref.org/works/%s"%(self.escape_inner_quotes(citing_doi)),timenow)
+
+                    #we have errors
+                    else:
+                        #break all and return the errors
+                        return {"errors": ref_entry_attr["errors"], "citing_doi": citing_doi}
+                        break
+
+            return {
+                "citing_doi": citing_doi,
+                "data": data_txtblock,
+                "prov": prov_txtblock
+            }
+        return - 1
 
     #given a reference entry returns it's DOI, CI, and Publication-Date
     #in case one of these attributes is not present: the methods returns -1
@@ -614,7 +607,7 @@ class Cocirefprocess:
                         if cited_date == "":
                             cited_date = my_year
 
-            self.update_date(cited_date, cited_doi)
+            #self.update_date(cited_date, cited_doi)
 
             return {'value': {'cited_doi': cited_doi, 'cited_ci': cited_ci, 'cited_date':cited_date,'cited_year':my_year, 'cited_issn':cited_issn, 'cited_orcids':cited_orcids},'nodoi_text':nodoi_text}
 
@@ -624,19 +617,22 @@ class Cocirefprocess:
 
 
 if __name__ == "__main__":
-    arg_parser = ArgumentParser("cociprocess_refs_no_share.py", description="Process a crossref JSON files.")
+    arg_parser = ArgumentParser("cociprocess_json_dump.py", description="Process a crossref JSON files.")
 
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The directory containing other dir with data dump.")
     arg_parser.add_argument("-glob", dest="glob_dir", required=True, help="The global index file")
     arg_parser.add_argument("-out", "--output_dir", dest="output_dir", required=False, help="The directory where the output and processing results are stored.")
+    arg_parser.add_argument("-data", dest="file_entries", required=False, help="The number of entries for each csv generated.")
+    #in case of API calls
+    arg_parser.add_argument("-api", action="store_true", dest="api_flag", required=False, help="Specify wheter you want to call crossref API in case no results in index")
     arg_parser.add_argument("-iterations", dest="num_ite", required=False, help="Maximum number of GET requests.")
     arg_parser.add_argument("-timeout", dest="timeout", required=False, help="Number of seconds before declaring a GET in timeout.")
     arg_parser.add_argument("-sleep", dest="sleep_time", required=False, help="Seconds of sleeping time between a GET request and a second try.")
-    arg_parser.add_argument("-data", dest="file_entries", required=False, help="The number of entries for each csv generated.")
-    arg_parser.add_argument("-n", dest="process_number", required=True, type=int, help="The number of the process.")
-    arg_parser.add_argument("-ds", dest="dir_step", required=True, type=int, help="The step for calculating dir")
-    arg_parser.add_argument("-dn", dest="dir_number", required=True, type=int, help="The number of dir assigned")
-    arg_parser.add_argument("-api", action="store_true", dest="api_flag", required=False, help="Specify wheter you want to call crossref API in case no results in index")
+
+    #in case of parallel processing
+    #arg_parser.add_argument("-n", dest="process_number", required=True, type=int, help="The number of the process.")
+    #arg_parser.add_argument("-ds", dest="dir_step", required=True, type=int, help="The step for calculating dir")
+    #arg_parser.add_argument("-dn", dest="dir_number", required=True, type=int, help="The number of dir assigned")
 
     args = arg_parser.parse_args()
 
@@ -666,14 +662,17 @@ if __name__ == "__main__":
         cp.REQ_SLEEP_TIME = int(args.sleep_time)
 
     if args.input_dir:
-        cp.INPUT_DATA_PATH = []
-        ending_number = args.process_number * args.dir_number
-        starting_number = ending_number - (args.dir_number - 1)
-        for number in range(starting_number * args.dir_step, (ending_number+1) * args.dir_step, args.dir_step):
-            cp.INPUT_DATA_PATH += ["%s/%s/"%(args.input_dir, str(number))]
+        cp.INPUT_DATA_PATH = ["%s/"%(args.input_dir)]
+        #cp.INPUT_DATA_PATH = []
+        #ending_number = args.process_number * args.dir_number
+        #starting_number = ending_number - (args.dir_number - 1)
+        #for number in range(starting_number * args.dir_step, (ending_number+1) * args.dir_step, args.dir_step):
+            #cp.INPUT_DATA_PATH += ["%s/%s/"%(args.input_dir, str(number))]
 
     if args.output_dir:
-        cp.init_output_paths(args.output_dir + os.sep + str(args.process_number))
+        #output_dir = args.process_number
+        output_dir = "csv"
+        cp.init_output_paths(args.output_dir + os.sep + str(output_dir))
 
 
     cp.reload()
@@ -681,15 +680,27 @@ if __name__ == "__main__":
     print("Processing started "+str(datetime.datetime.now().replace(microsecond=0)))
     print("The input data: "+ str(cp.INPUT_DATA_PATH))
     #iterate all the input data and process the json files
+
+    #Just to get the total number of files to process
+    total = 0
     for cur_dir in cp.INPUT_DATA_PATH:
         if os.path.exists(cur_dir):
             for subdir, dirs, files in os.walk(cur_dir):
                 for file in files:
                     if file.lower().endswith('.json'):
-                        print(file)
+                        total = total + 1
+
+    f_count = 1
+    for cur_dir in cp.INPUT_DATA_PATH:
+        if os.path.exists(cur_dir):
+            for subdir, dirs, files in os.walk(cur_dir):
+                for file in files:
+                    if file.lower().endswith('.json'):
+                        print(file, " "+str(total)+"/"+str(f_count))
                         data = json.load(open(os.path.join(subdir, file)))
                         matchObj = re.match( r'(.*).json', file.lower() , re.M|re.I)
                         cur_id = int(matchObj.group(1))
                         cp.process_list_items(data,cur_id, message_key= False)
+                        f_count = f_count + 1
 
     print("Processing finished "+str(datetime.datetime.now().replace(microsecond=0)))
