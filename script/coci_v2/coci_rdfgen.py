@@ -11,7 +11,7 @@ import urllib
 if __name__ == "__main__":
     arg_parser = ArgumentParser("coci_rdfgen.py", description="Create the RDF dataset for COCI")
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The root directory of the COCI processed data")
-    arg_parser.add_argument("-out", dest="output_file", required=False, help="The absolute path to the new output file (.nt format).")
+    arg_parser.add_argument("-out", dest="output_file", required=False, help="The absolute path to the new output file (.ttl format).")
     arg_parser.add_argument("-data", action="store_true", dest="incdata", required=False, help="Specify wheter you want to include the data triples in the graph.")
     arg_parser.add_argument("-prov", action="store_true", dest="incprov", required=False, help="Specify wheter you want to include the provenance triples in the graph.")
     arg_parser.add_argument("-baseurl", dest="baseurl", required=False, help="The base url of the resources.")
@@ -20,16 +20,16 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
 
     INPUT_ROOT_DIR = "."
-    OUTPUT_FILE = "dataset.nt"
+    OUTPUT_FILE = "dataset.ttl"
     BASE_URL = "https://w3id.org/oc/index/coci/"
     INCLUDE_DATA = False
     INCLUDE_PROV = False
     ENTRIES_PER_FILE = 10000
-    OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.nt'
+    OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.ttl'
 
     if args.e_x_file:
         ENTRIES_PER_FILE = args.e_x_file
-        OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.nt'
+        OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.ttl'
 
     if args.incdata:
         INCLUDE_DATA = True
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
                         if block_txt != "":
                             if split_counter % int(ENTRIES_PER_FILE) == 0:
-                                OUTPUT_FILE = str(int(ENTRIES_PER_FILE) * (split_counter // int(ENTRIES_PER_FILE)))+'.nt'
+                                OUTPUT_FILE = str(int(ENTRIES_PER_FILE) * (split_counter // int(ENTRIES_PER_FILE)))+'.ttl'
                                 if args.output_file:
                                     OUTPUT_FILE = args.output_file + "/" + OUTPUT_FILE
                                 with open(OUTPUT_FILE, 'w') as f:
@@ -126,4 +126,5 @@ if __name__ == "__main__":
                                 f.write(block_txt)
 
                             split_counter = split_counter + 1
+
     print("Done")
