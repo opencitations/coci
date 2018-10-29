@@ -71,6 +71,7 @@ if __name__ == "__main__":
 
 
     #populate prov dictionary
+    print("Building the Prov dictionary ...")
     prov_dic = {}
     for dirpath, dnames, fnames in os.walk(prov_dir):
         for f in fnames:
@@ -83,6 +84,7 @@ if __name__ == "__main__":
                         prov_dic[row['oci']] = {'agent': row['agent'],'source': row['source'],'datetime': row['datetime']}
 
     #iterate all data entries
+    print("Reading all the entries in the csv ...")
     split_counter = 1
     for dirpath, dnames, fnames in os.walk(data_dir):
         for f in fnames:
