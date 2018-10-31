@@ -534,8 +534,10 @@ class Cocirefprocess:
 
                         #compare issn
                         journal_sc_val = 'no'
-                        if len(set(citing_issn) & set(ref_entry_attr['cited_issn'])) > 0:
-                            journal_sc_val = 'yes'
+                        if 'type' in obj:
+                            if obj['type'] == 'journal-article':
+                                if len(set(citing_issn) & set(ref_entry_attr['cited_issn'])) > 0:
+                                    journal_sc_val = 'yes'
 
                         #compare orcids
                         orcid_sc_val = 'no'
