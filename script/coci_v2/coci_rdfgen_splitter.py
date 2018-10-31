@@ -151,10 +151,10 @@ if __name__ == "__main__":
                                 count += 1
                                 s += line
                             else:
-                                populate_prov(s)
+                                populate_prov(s, OUTPUT_FILE)
 
                                 num_file += 1
-                                print(OUTPUT_FILE)
+                                OUTPUT_FILE = str(int(ENTRIES_PER_FILE) * num_file)+'.ttl'
                                 if args.output_file:
                                     OUTPUT_FILE = args.output_file + "/" + OUTPUT_FILE
                                 with open(OUTPUT_FILE, 'w') as f:
@@ -164,7 +164,7 @@ if __name__ == "__main__":
                                 count = 0
 
                         if s != "":
-                            populate_prov(s)
+                            populate_prov(s, OUTPUT_FILE)
 
 
     if INCLUDE_DATA:
