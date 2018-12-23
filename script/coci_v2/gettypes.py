@@ -65,7 +65,7 @@ if __name__ == "__main__":
         if not input_csv_exists:
             o.write("\"doi\",\"type\"\n")
 
-        for cur_files, cur_dir, cur_subdir in walk(args.input_dir):
+        for cur_dir, cur_subdir, cur_files in walk(args.input_dir):
             for cur_file in cur_files:
                 if cur_file.endswith(".json"):
                     with open(cur_dir + sep + cur_file) as f:
