@@ -77,6 +77,6 @@ if __name__ == "__main__":
                                     if cur_doi not in existing_types:
                                         existing_types.add(cur_doi)
                                         cur_type = item["type"] if "type" in item else ""
-                                        o.write("\"%s\",\"%s\"\n" % (cur_doi.replace("\"", "\"\"\"")), cur_type)
+                                        o.write("\"%s\",\"%s\"\n" % (cur_doi.replace("\"", "\"\"\""), cur_type))
 
     print("Done.")
