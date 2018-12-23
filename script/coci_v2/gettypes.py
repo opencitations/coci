@@ -73,8 +73,10 @@ if __name__ == "__main__":
                         if "items" in cur_json:
                             for item in cur_json["items"]:
                                 if "DOI" in item:
-                                    cur_type = item["type"] if "type" in item else ""
-                                    o.write("\"%s\",\"%s\"\n" % (
-                                        item["DOI"].lower().strip().replace("\"", "\"\"\"")), cur_type)
+                                    cur_doi = item["DOI"].lower().strip()
+                                    if cur_doi not in existing_types:
+                                        existing_types.add(cur_doi)
+                                        cur_type = item["type"] if "type" in item else ""
+                                        o.write("\"%s\",\"%s\"\n" % (cur_doi.replace("\"", "\"\"\"")), cur_type)
 
     print("Done.")
