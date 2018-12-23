@@ -18,6 +18,7 @@ from argparse import ArgumentParser
 from csv import DictReader, writer
 from io import StringIO
 from os import walk, sep
+from os.path import exists
 from json import load
 
 
@@ -41,26 +42,27 @@ if __name__ == "__main__":
     args = arg_parser.parse_args()
 
     header = None
-    result = {}
     threshold = 10000
     existing_types = set()
+    input_csv_exists = exists(args.input_file)
 
-    with open(args.input_file) as f:
-        csv_content = ""
-        for idx, line in enumerate(f.readlines()):
-            if header is None:
-                header = line
-                csv_content = header
-            else:
-                if idx % threshold == 0:  # update stats
-                    existing_types.update(get_doi(csv_content))
+    if input_csv_exists:
+        with open(args.input_file) as f:
+            csv_content = ""
+            for idx, line in enumerate(f.readlines()):
+                if header is None:
+                    header = line
                     csv_content = header
-                csv_content += line
+                else:
+                    if idx % threshold == 0:  # update stats
+                        existing_types.update(get_doi(csv_content))
+                        csv_content = header
+                    csv_content += line
 
-        existing_types.update(get_doi(csv_content))
+            existing_types.update(get_doi(csv_content))
 
     with open(args.input_file, "a") as o:
-        if existing_types:
+        if not input_csv_exists:
             o.write("\"doi\",\"type\"\n")
 
         for cur_files, cur_dir, cur_subdir in walk(args.input_dir):
