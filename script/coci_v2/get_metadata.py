@@ -31,6 +31,8 @@ TITLE = "title"
 CITATIONS = "cited_by"
 DATE = "pub_year"
 THRESHOLD = 10000
+BOOK_TYPES = ("monograph", "book", "edited-book", "reference-book")
+BOOK_CHAPTER_TYPES = ("book-chapter", )
 
 
 def normalize_doi(d_string):
@@ -73,10 +75,10 @@ def get_type(item):
 def get_author_number(item):
     aut_list = []
 
-    if "editor" in item and item["editor"]:
-        aut_list = item["editor"]
-    elif "author" in item and item["author"]:
+    if "author" in item and item["author"]:
         aut_list = item["author"]
+    elif "editor" in item and item["editor"] and get_type(item) in BOOK_TYPES:
+        aut_list = item["editor"]
 
     return ",\"%s\"" % str(len(aut_list))
 
@@ -198,10 +200,9 @@ if __name__ == "__main__":
                                                 if header_type == TYPE:
                                                     cur_row += ",\"%s\"" % get_type(item)
                                                 elif header_type == ISBN:
-                                                    cur_row += get_isbn(item, ("monograph", "book",
-                                                                               "edited-book", "reference-book"))
+                                                    cur_row += get_isbn(item, BOOK_TYPES)
                                                 elif header_type == CONTAINER_ISBN:
-                                                    cur_row += get_isbn(item, ("book-chapter", ))
+                                                    cur_row += get_isbn(item, BOOK_CHAPTER_TYPES)
                                                 elif header_type == AUTHOR_N:
                                                     cur_row += get_author_number(item)
                                                 elif header_type == TITLE:
