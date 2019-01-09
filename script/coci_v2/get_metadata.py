@@ -256,7 +256,7 @@ if __name__ == "__main__":
                                                 elif header_type == NON_OPEN:
                                                     cit_count = existing_citations.get(cur_doi)
                                                     cur_row += ",\"%s\"" % str(get_referenced_by(item) -
-                                                                               (cit_count if cit_count else 0))
+                                                                               int(cit_count if cit_count else 0))
 
                                             o.write("%s\n" % cur_row)
     else:
