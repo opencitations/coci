@@ -175,6 +175,8 @@ if __name__ == "__main__":
                             help="It counts the number of authors of an item.")
     arg_parser.add_argument("-no", "--non_open", dest="non_open", default=False, action="store_true",
                             help="It counts the number of citations that are not open in COCI.")
+    arg_parser.add_argument("-title", "--title", dest="title", default=False, action="store_true",
+                            help="It gets the title of the considered entities.")
     arg_parser.add_argument("-all", "--all_fields", dest="all_fields", default=False, action="store_true",
                             help="It considers all the fields.")
 
