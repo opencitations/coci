@@ -115,7 +115,7 @@ def get_title(item):
                 else:
                     cur_title += " - " + strip_title
 
-    return ",\"%s\"" % sub("\s+", " ",  cur_title.title()).strip().replace("\"", "\"\"\"")
+    return ",\"%s\"" % sub("\s+", " ",  cur_title.title()).strip().replace("\"", "\"\"")
 
 
 def get_referenced_by(item):
@@ -127,7 +127,7 @@ def get_referenced_by(item):
     return cur_referenced_by
 
 
-def open_csv(f_path, func, stored_entities):
+def open_csv(f_path, func, stored_entities, triplequotes):
     header = None
 
     # Get existing data
@@ -143,7 +143,7 @@ def open_csv(f_path, func, stored_entities):
                         csv_metadata = DictReader(StringIO(csv_content), delimiter=',')
                         func(csv_metadata, stored_entities)
                         csv_content = header
-                    csv_content += line
+                    csv_content += line.replace("\"\"\"", "\"\"") if triplequotes else line
 
             csv_metadata = DictReader(StringIO(csv_content), delimiter=',')
             func(csv_metadata, stored_entities)
@@ -179,22 +179,25 @@ if __name__ == "__main__":
                             help="It gets the title of the considered entities.")
     arg_parser.add_argument("-all", "--all_fields", dest="all_fields", default=False, action="store_true",
                             help="It considers all the fields.")
+    arg_parser.add_argument("-tp", "--triplequotes", dest="triplequotes", default=False, action="store_true",
+                            help="Handle the CSV even in case it contains triplequotes (due to a mistake) "
+                                 "instead of doublequotes (as should be handled).")
 
 
     args = arg_parser.parse_args()
 
     # Get existing entities
     existing_entities = set()
-    input_csv_exists = open_csv(args.input_file, get_doi, existing_entities)
+    input_csv_exists = open_csv(args.input_file, get_doi, existing_entities, args.triplequotes)
 
     # Get citation counts
     existing_citations = dict()
-    open_csv(args.citation_count, get_citation_count, existing_citations)
-    open_csv(args.citation_file, get_citations, existing_citations)
+    open_csv(args.citation_count, get_citation_count, existing_citations, args.triplequotes)
+    open_csv(args.citation_file, get_citations, existing_citations, args.triplequotes)
 
     # Get DOI dates (year)
     existing_dates = dict()
-    open_csv(args.date_file, get_date, existing_dates)
+    open_csv(args.date_file, get_date, existing_dates, args.triplequotes)
 
     # Headers setting
     header_types = []
@@ -235,7 +238,7 @@ if __name__ == "__main__":
                                         if cur_doi not in existing_entities:
                                             existing_entities.add(cur_doi)
 
-                                            cur_row = "\"%s\"" % cur_doi.replace("\"", "\"\"\"")
+                                            cur_row = "\"%s\"" % cur_doi.replace("\"", "\"\"")
                                             for header_type in header_types:
                                                 if header_type == TYPE:
                                                     cur_row += ",\"%s\"" % get_type(item)
