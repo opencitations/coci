@@ -29,6 +29,7 @@ CONTAINER_ISBN = "container_isbn"
 AUTHOR_N = "author_n"
 TITLE = "title"
 CITATIONS = "cited_by"
+NON_OPEN = "non_open"
 DATE = "pub_year"
 THRESHOLD = 10000
 BOOK_TYPES = ("monograph", "book", "edited-book", "reference-book")
@@ -98,6 +99,15 @@ def get_title(item):
     return ",\"%s\"" % sub("\s+", " ",  cur_title.title()).strip().replace("\"", "\"\"\"")
 
 
+def get_referenced_by(item):
+    cur_referenced_by = 0
+
+    if "is-referenced-by-count" in item:
+        cur_referenced_by = int(item["is-referenced-by-count"])
+
+    return cur_referenced_by
+
+
 def open_csv(f_path, func, stored_entities):
     header = None
 
@@ -126,7 +136,7 @@ def open_csv(f_path, func, stored_entities):
 if __name__ == "__main__":
     arg_parser = ArgumentParser("get_metadata.py", description="Get the values of all the documents in Crossref.")
     arg_parser.add_argument("-i", "--in", dest="input_file", required=True,
-                            help="The CSV file containing the times of interest.")
+                            help="The CSV file containing the data of interest.")
     arg_parser.add_argument("-d", "--dir", dest="input_dir", required=True,
                             help="The directory which contains the Crossref files.")
     arg_parser.add_argument("-citations", "--citations", dest="citation_file", default=None,
@@ -141,6 +151,8 @@ if __name__ == "__main__":
                             help="It gets all the ISBN of the books containing 'inbook' entities.")
     arg_parser.add_argument("-aut", "--author_number", dest="author_number", default=False, action="store_true",
                             help="It counts the number of authors of an item.")
+    arg_parser.add_argument("-no", "--non_open", dest="non_open", default=False, action="store_true",
+                            help="It counts the number of citations that are not open in COCI.")
     arg_parser.add_argument("-all", "--all_fields", dest="all_fields", default=False, action="store_true",
                             help="It considers all the fields.")
 
@@ -174,6 +186,8 @@ if __name__ == "__main__":
         header_types.append(CITATIONS)
     if args.date_file:
         header_types.append(DATE)
+    if args.non_open:
+        header_types.append(NON_OPEN)
 
     if header_types:
         with open(args.input_file, "a") as o:
@@ -213,6 +227,10 @@ if __name__ == "__main__":
                                                 elif header_type == DATE:
                                                     year = existing_dates.get(cur_doi)
                                                     cur_row += ",\"%s\"" % (year if year else "")
+                                                elif header_type == NON_OPEN:
+                                                    cit_count = existing_citations.get(cur_doi)
+                                                    cur_row += ",\"%s\"" % str(get_referenced_by(item) -
+                                                                               (cit_count if cit_count else 0))
 
                                             o.write("%s\n" % cur_row)
     else:
