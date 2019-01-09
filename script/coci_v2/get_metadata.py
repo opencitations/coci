@@ -31,6 +31,7 @@ TITLE = "title"
 CITATIONS = "cited_by"
 NON_OPEN = "non_open"
 DATE = "pub_year"
+DOI = "doi"
 THRESHOLD = 10000
 BOOK_TYPES = ("monograph", "book", "edited-book", "reference-book")
 BOOK_CHAPTER_TYPES = ("book-chapter", )
@@ -45,12 +46,30 @@ def get_doi(csv_metadata, stored_entities):
         stored_entities.add(row["doi"])
 
 
+def get_citation_count(csv_metadata, stored_entities):
+    for row in csv_metadata:
+        cur_cited = normalize_doi(row[DOI])
+        if cur_cited not in stored_entities:
+            if CITATIONS in row:
+                stored_entities[cur_cited] = row[CITATIONS]
+            else:
+                stored_entities[cur_cited] = 0
+
+
 def get_citations(csv_metadata, stored_entities):
+    init_here = set()
+
     for row in csv_metadata:
         cur_cited = normalize_doi(row["cited"])
         if cur_cited not in stored_entities:
+            init_here.add(cur_cited)
             stored_entities[cur_cited] = 0
-        stored_entities[cur_cited] += 1
+
+        # Only the data about cited articles that have been initialised by the current run of this function will be
+        # actually updated, while all the already existing entities retrieved before by previous executions of this or
+        # other functions (e.g. 'get_citation_count') won't be considered.
+        if cur_cited in init_here:
+            stored_entities[cur_cited] += 1
 
 
 def get_date(csv_metadata, stored_entities):
@@ -139,8 +158,11 @@ if __name__ == "__main__":
                             help="The CSV file containing the data of interest.")
     arg_parser.add_argument("-d", "--dir", dest="input_dir", required=True,
                             help="The directory which contains the Crossref files.")
-    arg_parser.add_argument("-citations", "--citations", dest="citation_file", default=None,
+    arg_parser.add_argument("-cit", "--citations", dest="citation_file", default=None,
                             help="The CSV file containing all the citations in COCI.")
+    arg_parser.add_argument("-cc", "--citation_count", dest="citation_count", default=None,
+                            help="The CSV file containing the citation counts ('cited_by' field) of the articles. "
+                                 "When used in combination with 'cit', 'cc' will be executed first.")
     arg_parser.add_argument("-date", "--date", dest="date_file", default=None,
                             help="The CSV file containing all the dates of DOIs.")
     arg_parser.add_argument("-type", "--type", dest="type", default=False, action="store_true",
@@ -165,12 +187,14 @@ if __name__ == "__main__":
 
     # Get citation counts
     existing_citations = dict()
+    open_csv(args.citation_count, get_citation_count, existing_citations)
     open_csv(args.citation_file, get_citations, existing_citations)
 
     # Get DOI dates (year)
     existing_dates = dict()
     open_csv(args.date_file, get_date, existing_dates)
 
+    # Headers setting
     header_types = []
     if args.all_fields or args.type:
         header_types.append(TYPE)
@@ -182,7 +206,7 @@ if __name__ == "__main__":
         header_types.append(AUTHOR_N)
     if args.all_fields or args.title:
         header_types.append(TITLE)
-    if args.citation_file:
+    if args.citation_file or args.citation_count:
         header_types.append(CITATIONS)
     if args.date_file:
         header_types.append(DATE)
@@ -192,7 +216,7 @@ if __name__ == "__main__":
     if header_types:
         with open(args.input_file, "a") as o:
             if not input_csv_exists:
-                cur_header = "\"doi\""
+                cur_header = "\"%s\"" % DOI
                 for header_type in header_types:
                     cur_header += ",\"%s\"" % header_type
                 o.write("%s\n" % cur_header)
