@@ -11,18 +11,25 @@ import urllib
 if __name__ == "__main__":
     arg_parser = ArgumentParser("coci_rdfgen.py", description="Create the RDF dataset for COCI")
     arg_parser.add_argument("-in", "--input_dir", dest="input_dir", required=True, help="The root directory of the COCI processed data")
-    arg_parser.add_argument("-out", dest="output_file", required=False, help="The absolute path to the new output file (.nt format).")
+    arg_parser.add_argument("-out", dest="output_file", required=False, help="The absolute path to the new output file (.ttl format).")
     arg_parser.add_argument("-data", action="store_true", dest="incdata", required=False, help="Specify wheter you want to include the data triples in the graph.")
     arg_parser.add_argument("-prov", action="store_true", dest="incprov", required=False, help="Specify wheter you want to include the provenance triples in the graph.")
     arg_parser.add_argument("-baseurl", dest="baseurl", required=False, help="The base url of the resources.")
+    arg_parser.add_argument("-n", dest="e_x_file", required=False, help="The number of entries per file.")
 
     args = arg_parser.parse_args()
 
     INPUT_ROOT_DIR = "."
-    OUTPUT_FILE = "dataset.nt"
+    OUTPUT_FILE = "dataset.ttl"
     BASE_URL = "https://w3id.org/oc/index/coci/"
     INCLUDE_DATA = False
     INCLUDE_PROV = False
+    ENTRIES_PER_FILE = 10000
+    OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.ttl'
+
+    if args.e_x_file:
+        ENTRIES_PER_FILE = args.e_x_file
+        OUTPUT_FILE = str(ENTRIES_PER_FILE)+'.ttl'
 
     if args.incdata:
         INCLUDE_DATA = True
@@ -37,7 +44,7 @@ if __name__ == "__main__":
         INPUT_ROOT_DIR = args.input_dir
 
     if args.output_file:
-        OUTPUT_FILE = args.output_file
+        OUTPUT_FILE = args.output_file + "/" + OUTPUT_FILE
         if os.path.dirname(OUTPUT_FILE) != "":
             if not os.path.exists(os.path.dirname(OUTPUT_FILE)):
                 try:
@@ -62,7 +69,9 @@ if __name__ == "__main__":
     data_dir = '%s/data/'%(INPUT_ROOT_DIR)
     prov_dir = '%s/prov/'%(INPUT_ROOT_DIR)
 
+
     #populate prov dictionary
+    print("Building the Prov dictionary ...")
     prov_dic = {}
     for dirpath, dnames, fnames in os.walk(prov_dir):
         for f in fnames:
@@ -75,16 +84,19 @@ if __name__ == "__main__":
                         prov_dic[row['oci']] = {'agent': row['agent'],'source': row['source'],'datetime': row['datetime']}
 
     #iterate all data entries
+    print("Reading all the entries in the csv ...")
+    split_counter = 1
     for dirpath, dnames, fnames in os.walk(data_dir):
         for f in fnames:
             if f.lower().endswith('.csv'):
                 d_file_path = os.path.join(data_dir, f)
 
                 #open the csv file and process each data entry
-                block_txt = ""
+                print("Processing file %s ..."%(d_file_path))
                 with open(d_file_path,'r') as csvfile:
                     csv_reader = csv.DictReader(csvfile)
                     for row in csv_reader:
+                        block_txt = ""
                         # oci , citing , cited , creation , timespan
                         # get the prov data from the prov dictionary oci key
                         # create the rdf and generate the files
@@ -100,12 +112,21 @@ if __name__ == "__main__":
                         citation = Citation( None, doi_prefix +  urllib.parse.quote(row['citing']), None,
                                             None, doi_prefix +  urllib.parse.quote(row['cited']), None,
                                             agent_url, oci_prov['source'], oci_prov['datetime'],
-                                            creation_date= row['creation'], duration= row['timespan'], oci= row['oci'])
+                                            author_sc = (row['author_sc'] == 'yes'), journal_sc = (row['journal_sc'] == 'yes'), creation_date= row['creation'], duration= row['timespan'], oci= row['oci'])
 
                         g = citation.get_citation_rdf(BASE_URL, include_oci=False, include_id_link=False, include_rdfs_lbl=False, include_data=INCLUDE_DATA, include_prov=INCLUDE_PROV)
                         block_txt = block_txt + g.serialize(format='nt').decode("utf-8")
 
-                if block_txt != "":
-                    with open(OUTPUT_FILE, 'a', newline='') as f:
-                        f.write(block_txt )
+                        if block_txt != "":
+                            if split_counter % int(ENTRIES_PER_FILE) == 0:
+                                OUTPUT_FILE = str(int(ENTRIES_PER_FILE) * (split_counter // int(ENTRIES_PER_FILE)))+'.ttl'
+                                if args.output_file:
+                                    OUTPUT_FILE = args.output_file + "/" + OUTPUT_FILE
+                                with open(OUTPUT_FILE, 'w') as f:
+                                    pass
+                            with open(OUTPUT_FILE, 'a', newline='') as f:
+                                f.write(block_txt)
+
+                            split_counter = split_counter + 1
+
     print("Done")
