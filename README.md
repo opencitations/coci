@@ -13,4 +13,4 @@ OpenCitations offers several options to access/query the data of COCI:
 ## COCI Workflow
 COCI has been created following the scheme in the figure bellow. All the related scripts could be found in the `script/` folder of this repository.  
 
-![chart_flow](https://ivanhb.github.io/phd/paper/coci_iswc2019/img/grflow.png)
+![chart_flow](https://ivanhb.github.io/phd/paper/coci_iswc2019/img/grflow(prov).png)
