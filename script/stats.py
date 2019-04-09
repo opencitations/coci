@@ -22,41 +22,46 @@ from re import sub
 
 def update(csv_string, stats):
     csv_metadata = DictReader(StringIO(csv_string), delimiter=',')
+    existing_ocis = set()
+
     for row in csv_metadata:
         if "n_cit" not in stats:
             stats["n_cit"] = 0
         stats["n_cit"] += 1
 
-        if "n_journal_sc" not in stats:
-            stats["n_journal_sc"] = 0
-        if row["journal_sc"] == "yes":
-            stats["n_journal_sc"] += 1
+        cur_oci = row["oci"]
+        if cur_oci not in existing_ocis:
+            existing_ocis.add(cur_oci)
+            if "n_journal_sc" not in stats:
+                stats["n_journal_sc"] = 0
+            if row["journal_sc"] == "yes":
+                stats["n_journal_sc"] += 1
 
-        if "n_author_sc" not in stats:
-            stats["n_author_sc"] = 0
-        if row["author_sc"] == "yes":
-            stats["n_author_sc"] += 1
+            if "n_author_sc" not in stats:
+                stats["n_author_sc"] = 0
+            if row["author_sc"] == "yes":
+                stats["n_author_sc"] += 1
 
-        if "all_citing" not in stats:
-            stats["all_citing"] = set()
-        citing = row["citing"]
-        stats["all_citing"].add(citing)
+            if "all_citing" not in stats:
+                stats["all_citing"] = set()
+            citing = row["citing"]
+            stats["all_citing"].add(citing)
 
-        if "all_cited" not in stats:
-            stats["all_cited"] = set()
-        cited = row["cited"]
-        stats["all_cited"].add(cited)
+            if "all_cited" not in stats:
+                stats["all_cited"] = set()
+            cited = row["cited"]
+            stats["all_cited"].add(cited)
 
-        citing_prefix = sub("^([^/]+)/.*$", "\\1", citing)
-        cited_prefix = sub("^([^/]+)/.*$", "\\1", cited)
+            citing_prefix = sub("^([^/]+)/.*$", "\\1", citing)
+            cited_prefix = sub("^([^/]+)/.*$", "\\1", cited)
 
-        if citing_prefix not in stats:
-            stats[citing_prefix] = {"citing": 0, "cited": 0}
-        if cited_prefix not in stats:
-            stats[cited_prefix] = {"citing": 0, "cited": 0}
+            if citing_prefix not in stats:
+                stats[citing_prefix] = {"citing": 0, "cited": 0}
+            if cited_prefix not in stats:
+                stats[cited_prefix] = {"citing": 0, "cited": 0}
 
-        stats[citing_prefix]["citing"] += 1
-        stats[cited_prefix]["cited"] += 1
+            stats[citing_prefix]["citing"] += 1
+            stats[cited_prefix]["cited"] += 1
 
 
 if __name__ == "__main__":
