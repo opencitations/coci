@@ -18,20 +18,20 @@ from argparse import ArgumentParser
 from csv import DictReader, writer
 from io import StringIO
 from re import sub
+from json import dump
 
 
-def update(csv_string, stats):
+def update(csv_string, stats, existing_ocis):
     csv_metadata = DictReader(StringIO(csv_string), delimiter=',')
-    existing_ocis = set()
 
     for row in csv_metadata:
-        if "n_cit" not in stats:
-            stats["n_cit"] = 0
-        stats["n_cit"] += 1
-
         cur_oci = row["oci"]
         if cur_oci not in existing_ocis:
             existing_ocis.add(cur_oci)
+            if "n_cit" not in stats:
+                stats["n_cit"] = 0
+            stats["n_cit"] += 1
+
             if "n_journal_sc" not in stats:
                 stats["n_journal_sc"] = 0
             if row["journal_sc"] == "yes":
@@ -76,6 +76,7 @@ if __name__ == "__main__":
     header = None
     result = {}
     threshold = 10000
+    existing_ocis = set()
 
     with open(args.input_file) as f:
         csv_content = ""
@@ -85,11 +86,11 @@ if __name__ == "__main__":
                 csv_content = header
             else:
                 if idx % threshold == 0:  # update stats
-                    update(csv_content, result)
+                    update(csv_content, result, existing_ocis)
                     csv_content = header
                 csv_content += line
 
-        update(csv_content, result)
+        update(csv_content, result, existing_ocis)
 
         csv_result = [
             ("n_cit", "n_journal_sc", "n_author_sc" "n_entities", "n_citing_entities", "n_cited_entities"),
@@ -99,4 +100,7 @@ if __name__ == "__main__":
         with open(args.output_file, "w") as g:
             csv_writer = writer(g)
             csv_writer.writerows(csv_result)
+
+        with open(args.output_file + ".json", "w") as g:
+            dump(result, g, ensure_ascii=False, encoding="utf-8")
 
