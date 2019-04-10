@@ -102,5 +102,5 @@ if __name__ == "__main__":
             csv_writer.writerows(csv_result)
 
         with open(args.output_file + ".json", "w") as g:
-            dump(result, g, ensure_ascii=False, encoding="utf-8")
+            dump(result, g, ensure_ascii=False)
 
