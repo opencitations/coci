@@ -52,8 +52,8 @@ def update(csv_string, stats, existing_ocis):
             cited = row["cited"]
             stats["all_cited"].add(cited)
 
-            citing_prefix = sub("^([^/]+)/.*$", "\\1", citing)
-            cited_prefix = sub("^([^/]+)/.*$", "\\1", cited)
+            citing_prefix = sub("^(10\.[0-9]+)([^\d].*)", "\\1", sub("^([^/]+)/.*$", "\\1", citing))
+            cited_prefix = sub("^(10\.[0-9]+)([^\d].*)", "\\1", sub("^([^/]+)/.*$", "\\1", cited))
 
             if citing_prefix not in stats:
                 stats[citing_prefix] = {"citing": 0, "cited": 0}
@@ -101,6 +101,6 @@ if __name__ == "__main__":
             csv_writer = writer(g)
             csv_writer.writerows(csv_result)
 
-        with open(args.output_file + ".json", "w") as g:
-            dump(result, g, ensure_ascii=False)
+        with open(args.output_file + ".json", "w") as x:
+            dump(result, x, indent=4, ensure_ascii=False)
 
