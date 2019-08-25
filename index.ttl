@@ -1,0 +1,26 @@
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/oc/index/coci/> a dcat:Dataset ;
+    dcterms:description "COCI, the OpenCitations Index of Crossref open DOI-to-DOI citations, is an RDF dataset containing details of all the citations that are specified by the open references to DOI-identified works present in Crossref, as of the latest COCI update. COCI does not index Crossref references that are not open, nor Crossref open references to entities that lack DOIs. These citations are treated as first-class data entities, with accompanying properties including the citations timespan, modelled according to the data model described in the OpenCitations Indexes page." ;
+    dcterms:issued "2018-06-04T00:00:00"^^xsd:dateTime ;
+    dcterms:modified "2018-11-12T00:00:00"^^xsd:dateTime ;
+    dcterms:title "COCI, the OpenCitations Index of Crossref open DOI-to-DOI citations" ;
+    void:sparqlEndpoint <https://w3id.org/oc/index/sparql> ;
+    dcat:keyword "COCI",
+        "OpenCitations",
+        "citations as first-class data entities",
+        "SPAR Ontologies",
+        "OCI",
+        "citations" ;
+    dcat:landingPage <http://opencitations.net/index/coci> ;
+    dcat:theme <http://dbpedia.org/resource/Bibliographic_database>,
+        <http://dbpedia.org/resource/Citation>,
+        <http://dbpedia.org/resource/Open_access>,
+        <http://dbpedia.org/resource/Scholarly_communication> .
+
